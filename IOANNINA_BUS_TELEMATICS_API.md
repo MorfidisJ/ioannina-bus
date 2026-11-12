@@ -1,140 +1,193 @@
 # Astiko KTEL Ioannina - Real-Time Telematics & Transit API
 
-Comprehensive technical guide and endpoint reference for reverse-engineering and querying real-time bus locations, arrivals, and schedules from **Αστικό ΚΤΕΛ Ιωαννίνων** (CityBus Ioannina, Agency ID `106`).
+Comprehensive technical guide and endpoint reference for querying real-time bus locations, GPS arrivals, and official timetables from **Αστικό ΚΤΕΛ Ιωαννίνων** (CityBus Ioannina, Agency ID `106`).
 
 ---
 
 ## 1. Quick Overview
 
-- **Web Portal**: [https://astiko-ioannina.gr/tilematiki/](https://astiko-ioannina.gr/tilematiki/)
+- **Official Web Portal**: [https://astiko-ioannina.gr/tilematiki/](https://astiko-ioannina.gr/tilematiki/)
 - **Embedded Web Client**: [https://ioannina.citybus.gr/el/stops](https://ioannina.citybus.gr/el/stops)
 - **REST API Base URL**: `https://rest.citybus.gr/api/v1`
-- **Agency ID**: `106` (Ioannina Urban Bus Service)
+- **Agency ID**: `106` (Ioannina Urban Bus Service / Αστικό ΚΤΕΛ Ιωαννίνων)
 - **Authentication**: Dynamic `Bearer <JWT_TOKEN>` extracted directly from `https://ioannina.citybus.gr/el/stops`.
-- **CORS Restriction**: The REST API requires `Origin: https://ioannina.citybus.gr` and enforces CORS on client browsers. For frontend web applications (React, Vue, etc.), queries must be routed through a backend server or serverless proxy (such as `/api/bus-live`).
+- **CORS Restriction**: The CityBus REST API requires `Origin: https://ioannina.citybus.gr` and `Referer: https://ioannina.citybus.gr/`. Direct requests from client browsers are blocked by CORS. All frontend web applications must route requests through a proxy server or serverless functions (e.g. `/api/live` and `/api/schedule`).
 
 ---
 
-## 2. Authentication & Token Extraction
+## 2. Key Transit & Campus Stops
 
-The token is embedded in the HTML of the official stops webpage:
+| Stop ID | Greek Name | English Name | Notes |
+|:---:|:---|:---|:---|
+| **930** | **Φιλοσοφική προς Κέντρο** | **Philosophy (to Center)** | **Closest stop to University Refectory / Cafeteria (Φοιτητική Λέσχη)** |
+| **400** | Δικαστικό Μέγαρο | Court House Hub | Main city center boarding stop towards Campus |
+| **447** | Πύλη Πανεπιστημίου | Campus Main Gate | University entrance stop towards City Center |
+| **451** | Πανεπιστημιακό Νοσοκομείο | University Hospital | Terminal hub for lines 16 & 17 |
+| **201** | Πλάτανος | Platanos Hub | City center & central commercial market |
+| **202** | Ρολόι | Clock Tower | Central city square stop |
+
+---
+
+## 3. Dynamic Authentication & Token Extraction
+
+The active Bearer token is embedded in the HTML script tag of `https://ioannina.citybus.gr/el/stops`:
+
 ```html
 <script>
     const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
 </script>
 ```
 
-### Token Extraction Pattern
-- **Regex**: `const\s+token\s*=\s*['"]([^'"]+)['"]`
-- **Cache Recommendation**: Cache the extracted token in memory for **40 to 45 minutes**.
-- **Retry Logic**: If any API endpoint returns HTTP `401 Unauthorized`, invalidate the cached token, re-fetch the web page to extract a fresh token, and retry the request once.
+### Token Extraction Regex & Lifecycle:
+- **Pattern**: `const\s+token\s*=\s*['"]([^'"]+)['"]`
+- **Cache Window**: 40 to 45 minutes in memory.
+- **Auto-Refresh**: If any endpoint returns `401 Unauthorized`, invalidate cache, re-fetch HTML for a fresh token, and retry the request once.
 
 ---
 
-## 3. Core API Endpoints
+## 4. REST Endpoints Reference
 
-All endpoints use `GET` and require the Bearer token in the request headers:
+All requests must include the following headers:
 ```http
-GET https://rest.citybus.gr/api/v1/{lang}/106/{endpoint}
 Authorization: Bearer <TOKEN>
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)
 Origin: https://ioannina.citybus.gr
 Referer: https://ioannina.citybus.gr/
 ```
-`{lang}` can be `el` (Greek) or `en` (English).
 
-### 3.1 Live Stop Departures (Real-Time GPS Tracking)
+### 4.1 Live Stop Arrivals (Real-Time GPS Tracking)
 ```http
-GET /api/v1/{lang}/106/stops/live/{stopCode}
+GET https://rest.citybus.gr/api/v1/{lang}/106/stops/live/{stopCode}
 ```
-- **Description**: Returns live vehicle arrivals within the next 30 minutes for a specified stop.
-- **HTTP Status Codes**:
+- `{lang}`: `el` or `en`
+- `{stopCode}`: Numeric stop ID (e.g. `930`, `400`)
+- **Status Codes**:
   - `200 OK`: One or more vehicles are currently transmitting GPS data towards this stop.
-  - `404 Not Found`: Normal response when no vehicles are within the 30-minute window (e.g. late night, off-peak, or terminal dwell). Treat this gracefully as `vehicles: []`.
-- **Response Structure**:
+  - `404 Not Found`: Normal response when no vehicles are within the 30-minute window (off-peak, night, or terminal wait). Treat gracefully as `vehicles: []`.
+
+#### Response Payload:
 ```json
 {
-  "stopCode": "400",
+  "stopCode": "930",
   "vehicles": [
     {
       "lineCode": "16",
       "lineName": "16 - ΠΑΝΕΠΙΣΤΗΜΙΟ",
-      "routeName": "ΔΙΚΑΣΤΗΡΙΑ - ΠΑΝΕΠΙΣΤΗΜΙΟ - ΝΟΣΟΚΟΜΕΙΟ",
+      "routeName": "ΠΑΝΕΠΙΣΤΗΜΙΟ - ΣΕΙΣΜΟΠΛΗΚΤΑ - ΠΕΡΑΜΑ",
       "departureMins": 4,
       "departureSeconds": 240,
       "vehicleCode": "32",
-      "latitude": 39.6645,
-      "longitude": 20.8512
+      "latitude": 39.6145,
+      "longitude": 20.8412
     }
   ]
 }
 ```
 
-### 3.2 Scheduled Stop Departures (Timetable)
+### 4.2 Scheduled Departures Timetable
 ```http
-GET /api/v1/{lang}/106/trips/stop/{stopCode}/day/{dayType}
+GET https://rest.citybus.gr/api/v1/{lang}/106/trips/stop/{stopCode}/day/{dayType}
 ```
-- **Description**: Returns full day scheduled departures for a stop.
-- **`{dayType}` parameter**:
-  - `1`: Weekdays (Καθημερινές / Monday - Friday)
+- `{dayType}`:
+  - `1`: Weekdays (Καθημερινές / Monday – Friday)
   - `2`: Saturdays (Σάββατο)
-  - `3`: Sundays & Holidays (Κυριακές & Αργίες)
+  - `3`: Sundays & Public Holidays (Κυριακές & Αργίες)
 
-### 3.3 All Transit Lines
-```http
-GET /api/v1/{lang}/106/lines
-```
-- **Description**: Lists all active bus lines (16, 17, 10, etc.) with line codes, Greek/English names, and color codes.
+> **Important Schema Note**: The CityBus API returns the departure time in the **`tripTime`** field (`"06:55"`), alongside `tripTimeHour` and `tripTimeMinute`. For universal compatibility, our clients and serverless functions map `tripTime` to `departureTime`.
 
-### 3.4 All Stops (Master Registry)
-```http
-GET /api/v1/{lang}/106/stops
+#### Response Payload:
+```json
+[
+  {
+    "id": 63840218,
+    "day": 1,
+    "routeCode": "1015",
+    "routeName": "ΠΑΝΕΠΙΣΤΗΜΙΟ ΚΑΡΔΑΜΙΤΣΑ",
+    "lineCode": "10",
+    "lineName": "ΝΟΣΟΚΟΜΕΙΟ ΧΑΤΖΗΚΩΣΤΑ ΚΑΡΔΑΜΙΤΣΙΑ",
+    "lineColor": "#787878",
+    "lineTextColor": "#ffffff",
+    "stopCode": "930",
+    "stopName": "ΦΙΛΟΣΟΦΙΚΗ ΠΡΟΣ ΚΕΝΤΡΟ",
+    "tripTime": "06:55",
+    "tripTimeHour": 6,
+    "tripTimeMinute": 55
+  }
+]
 ```
-- **Description**: Complete list of all stops in Ioannina with stop codes, stop names, latitude, and longitude.
 
-### 3.5 Route Sequence & Coordinates
+### 4.3 All Transit Lines
 ```http
-GET /api/v1/{lang}/106/routes/{routeCode}/sequence
+GET https://rest.citybus.gr/api/v1/{lang}/106/lines
 ```
-- **Description**: Ordered sequence of stops for a specific route with path coordinates.
+Returns all 16 official lines with line codes, Greek/English names, and official color codes.
+
+### 4.4 All Bus Stops
+```http
+GET https://rest.citybus.gr/api/v1/{lang}/106/stops
+```
+Returns all 429 official bus stops with coordinates (`lat`, `lng`), names, and stop IDs.
 
 ---
 
-## 4. Usage in Python
+## 5. Standalone Tools Included in Project
 
-Run the standalone script:
+### Python Client (`ioannina_bus_telematics.py`)
+Zero external dependencies (uses standard library `urllib`, `re`, `json`).
+
+Run from terminal:
 ```bash
+# Query stop 930 (University Refectory)
+python ioannina_bus_telematics.py 930
+
+# Query stop 400 (Court House)
 python ioannina_bus_telematics.py 400
 ```
 
-Import in your own code:
+Use in Python projects:
 ```python
 from ioannina_bus_telematics import IoanninaBusTelematics
 
 client = IoanninaBusTelematics()
+live = client.get_live_stop("930", lang="el")
 
-# Get live departures for Court House (Stop 400)
-live_data = client.get_live_stop("400", lang="el")
-if live_data["isLive"]:
-    for bus in live_data["vehicles"]:
-        print(f"Line {bus['line']} arriving in {bus['minutesUntil']} min (Bus #{bus['vehicleCode']})")
+if live["isLive"]:
+    for bus in live["vehicles"]:
+        print(f"Line {bus['line']} in {bus['minutesUntil']} mins (#{bus['vehicleCode']})")
 else:
-    print("No live buses transmitting right now.")
+    print("No active vehicles on GPS right now.")
 ```
 
 ---
 
-## 5. Usage in Node.js / TypeScript
+### Node.js Client (`ioannina_bus_telematics.js`)
+Zero external dependencies (uses native `fetch` in Node 18+).
 
-Run the standalone script:
+Run from terminal:
 ```bash
+# Query stop 930 (University Refectory)
+node ioannina_bus_telematics.js 930
+
+# Query stop 400 (Court House)
 node ioannina_bus_telematics.js 400
 ```
 
-Import in your own module:
+Use in Node.js / TypeScript projects:
 ```javascript
 import { getLiveStop, getStopSchedule } from './ioannina_bus_telematics.js';
 
-const live = await getLiveStop('400', 'el');
+const live = await getLiveStop('930', 'el');
 console.log(live);
+
+const timetable = await getStopSchedule('930', 1, 'el');
+console.log(`Found ${timetable.length} trips.`);
 ```
 
+---
+
+## 6. Web Application Architecture (`ioannina-bus`)
+
+- **Frontend**: React 18 + Vite + TypeScript + Tailwind CSS.
+- **Local Dev Proxy**: `vite.config.ts` connects `/api/live` and `/api/schedule` to `api/live.js` and `api/schedule.js`.
+- **Production Serverless**: `vercel.json` and `/api` folder deploy as zero-config edge/serverless functions.
+- **Offline Data**: `data/stops.json` (429 stops) and `data/lines.json` (16 lines) are bundled locally for instant offline search and zero latency.
