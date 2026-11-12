@@ -7,9 +7,14 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "cap:sync": "npx cap sync android",
+    "build:apk": "powershell -ExecutionPolicy Bypass -File ./build_apk.ps1",
     "import-data": "node scripts/import_stops.js"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
     "react": "^18.3.1",
@@ -27,4 +32,3 @@
     "vite": "^6.2.0"
   }
 }
-
