@@ -21,3 +21,4 @@ if (Test-Path $apkPath) {
 } else {
     Write-Host "Build finished. Checking APK..."
 }
+

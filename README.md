@@ -1,6 +1,18 @@
 # Ioannina Bus (Αστικό ΚΤΕΛ Ιωαννίνων) - Live Telematics & Favorite Stops
 
-A high-performance, real-time transit tracker for **all 429 bus stops** and **all bus lines** in Ioannina, Greece.
+A high-performance, real-time transit tracker for **all 429 bus stops** and **all bus lines** in Ioannina, Greece. Available as both a modern web app and a standalone native Android application (APK).
+
+---
+
+## 📱 Download Android APK
+
+The native Android app is ready to install! Download the latest APK release directly:
+
+[![Download APK](https://img.shields.io/badge/Download_APK-v1.0.0-emerald?style=for-the-badge&logo=android)](https://github.com/MorfidisJ/ioannina-bus/releases/latest)
+
+👉 **[Download ioannina-bus.apk from GitHub Releases (v1.0.0)](https://github.com/MorfidisJ/ioannina-bus/releases/download/v1.0.0/ioannina-bus.apk)**
+
+*Self-contained: Connects directly to the CityBus telematics service via native CapacitorHttp without requiring any local backend.*
 
 ---
 
