@@ -129,3 +129,4 @@ if (process.argv[1]?.endsWith('ioannina_bus_telematics.js')) {
     }
   }).catch(err => console.error('Error:', err.message));
 }
+
