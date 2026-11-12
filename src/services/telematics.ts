@@ -27,10 +27,29 @@ export async function fetchStopSchedule(
   dayType: 1 | 2 | 3 = 1,
   lang: 'el' | 'en' = 'el'
 ): Promise<ScheduledTrip[]> {
-  const res = await fetch(`/api/schedule?stopCode=${encodeURIComponent(stopCode)}&dayType=${dayType}&lang=${lang}`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  return Array.isArray(data.trips) ? data.trips : [];
+  try {
+    const res = await fetch(`/api/schedule?stopCode=${encodeURIComponent(stopCode)}&dayType=${dayType}&lang=${lang}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const rawList = Array.isArray(data.trips) ? data.trips : [];
+    return rawList.map((t: any) => {
+      const timeStr = String(t.departureTime || t.tripTime || '').trim();
+      const parts = timeStr.split(':');
+      const hour = t.hour !== undefined ? t.hour : (parts[0] ? parseInt(parts[0], 10) : 0);
+      const minute = t.minute !== undefined ? t.minute : (parts[1] ? parseInt(parts[1], 10) : 0);
+      return {
+        ...t,
+        departureTime: timeStr,
+        tripTime: timeStr,
+        hour,
+        minute,
+        totalMinutes: hour * 60 + minute
+      };
+    }).sort((a: ScheduledTrip, b: ScheduledTrip) => (a.totalMinutes ?? 0) - (b.totalMinutes ?? 0));
+  } catch (err) {
+    console.error('fetchStopSchedule error:', err);
+    return [];
+  }
 }
 
 /**

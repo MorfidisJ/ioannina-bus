@@ -59,14 +59,14 @@ export const StopDetailsHeader: React.FC<StopDetailsHeaderProps> = ({
         {/* Toggle Favorite */}
         <button
           onClick={onToggleFavorite}
-          className={`py-2 px-2.5 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition-all active:scale-95 border ${
+          className={`h-11 px-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 border ${
             isFavorite
               ? 'bg-amber-950/40 text-amber-300 border-amber-800/60'
-              : 'bg-slate-800/70 text-slate-300 border-slate-700/60 hover:text-white'
+              : 'bg-slate-800/90 text-slate-300 border-slate-700/80 hover:text-white'
           }`}
         >
-          <Star size={14} className={isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-400'} />
-          <span className="truncate">{isFavorite ? (lang === 'el' ? 'Αγαπημένη' : 'Saved') : (lang === 'el' ? 'Αγαπημένο' : 'Favorite')}</span>
+          <Star size={15} className={isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-400'} />
+          <span className="truncate">{isFavorite ? (lang === 'el' ? 'Αγαπημένη' : 'Saved') : (lang === 'el' ? 'Αποθήκευση' : 'Favorite')}</span>
         </button>
 
         {/* Google Maps Directions */}
@@ -74,18 +74,18 @@ export const StopDetailsHeader: React.FC<StopDetailsHeaderProps> = ({
           href={googleMapsUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="py-2 px-2.5 rounded-xl text-xs font-medium bg-slate-800/70 text-slate-300 border border-slate-700/60 hover:text-white flex items-center justify-center gap-1.5 transition-all active:scale-95"
+          className="h-11 px-2.5 rounded-xl text-xs font-semibold bg-slate-800/90 text-slate-300 border border-slate-700/80 hover:text-white flex items-center justify-center gap-1.5 transition-all active:scale-95"
         >
-          <Navigation size={13} className="text-sky-400" />
+          <Navigation size={14} className="text-sky-400" />
           <span>{lang === 'el' ? 'Χάρτης' : 'Map'}</span>
         </a>
 
         {/* Change Stop Button */}
         <button
           onClick={onOpenSearch}
-          className="py-2 px-2.5 rounded-xl text-xs font-medium bg-sky-600/20 text-sky-300 border border-sky-500/30 hover:bg-sky-600/30 flex items-center justify-center gap-1.5 transition-all active:scale-95"
+          className="h-11 px-2.5 rounded-xl text-xs font-semibold bg-sky-600/20 text-sky-300 border border-sky-500/30 hover:bg-sky-600/30 flex items-center justify-center gap-1.5 transition-all active:scale-95"
         >
-          <MapPin size={13} />
+          <MapPin size={14} />
           <span>{lang === 'el' ? 'Αλλαγή' : 'Change'}</span>
         </button>
       </div>

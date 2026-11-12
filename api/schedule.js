@@ -21,12 +21,34 @@ export default async function handler(req, res) {
   const selectedLang = lang === 'en' ? 'en' : 'el';
 
   try {
-    const trips = await getStopSchedule(code, day, selectedLang);
+    const rawTrips = await getStopSchedule(code, day, selectedLang);
+    const trips = (Array.isArray(rawTrips) ? rawTrips : []).map(t => {
+      const timeStr = String(t.tripTime || t.departureTime || '').trim();
+      const parts = timeStr.split(':');
+      const hour = t.tripTimeHour !== undefined ? Number(t.tripTimeHour) : (parts[0] ? parseInt(parts[0], 10) : 0);
+      const minute = t.tripTimeMinute !== undefined ? Number(t.tripTimeMinute) : (parts[1] ? parseInt(parts[1], 10) : 0);
+      return {
+        id: t.id,
+        day: t.day || day,
+        lineCode: String(t.lineCode || '').trim(),
+        lineName: t.lineName || '',
+        lineColor: t.lineColor || '#2563eb',
+        lineTextColor: t.lineTextColor || '#ffffff',
+        routeCode: String(t.routeCode || ''),
+        routeName: t.routeName || '',
+        departureTime: timeStr,
+        tripTime: timeStr,
+        hour,
+        minute,
+        totalMinutes: hour * 60 + minute
+      };
+    }).sort((a, b) => a.totalMinutes - b.totalMinutes);
+
     return res.status(200).json({
       success: true,
       stopCode: code,
       dayType: day,
-      trips: Array.isArray(trips) ? trips : []
+      trips
     });
   } catch (err) {
     return res.status(200).json({
@@ -38,4 +60,3 @@ export default async function handler(req, res) {
     });
   }
 }
-

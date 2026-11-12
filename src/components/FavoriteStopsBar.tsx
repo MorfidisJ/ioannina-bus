@@ -122,14 +122,14 @@ export const FavoriteStopsBar: React.FC<FavoriteStopsBarProps> = ({
                 </span>
               </div>
 
-              {/* Hover / tap actions */}
-              <div className="flex items-center gap-0.5 ml-1 opacity-70 group-hover:opacity-100">
+              {/* Actions */}
+              <div className="flex items-center gap-0.5 ml-1">
                 <button
                   onClick={e => handleStartEdit(fav, e)}
                   title={lang === 'el' ? 'Μετονομασία' : 'Rename'}
-                  className="p-1 text-slate-400 hover:text-slate-200 rounded"
+                  className="p-1.5 text-slate-400 hover:text-white rounded-lg active:scale-90"
                 >
-                  <Edit2 size={11} />
+                  <Edit2 size={12} />
                 </button>
                 <button
                   onClick={e => {
@@ -137,9 +137,9 @@ export const FavoriteStopsBar: React.FC<FavoriteStopsBarProps> = ({
                     onRemoveFavorite(fav.code);
                   }}
                   title={lang === 'el' ? 'Αφαίρεση' : 'Remove'}
-                  className="p-1 text-slate-400 hover:text-rose-400 rounded"
+                  className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg active:scale-90"
                 >
-                  <Trash2 size={11} />
+                  <Trash2 size={12} />
                 </button>
               </div>
             </div>

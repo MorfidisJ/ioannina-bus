@@ -53,23 +53,23 @@ export const LiveArrivalsCard: React.FC<LiveArrivalsCardProps> = ({
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-50"
+            className="h-10 px-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700/80 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-50"
             title={lang === 'el' ? 'Ανανέωση' : 'Refresh'}
           >
-            <RefreshCw size={13} className={loading ? 'animate-spin text-sky-400' : ''} />
-            <span className="hidden sm:inline">{lang === 'el' ? 'Ανανέωση' : 'Refresh'}</span>
+            <RefreshCw size={14} className={loading ? 'animate-spin text-sky-400' : ''} />
+            <span>{lang === 'el' ? 'Ανανέωση' : 'Refresh'}</span>
           </button>
           <button
             onClick={onOpenTimetable}
-            className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 active:scale-95 transition-all flex items-center gap-1.5"
+            className="h-10 px-3 rounded-xl text-xs font-semibold text-sky-300 hover:text-white bg-sky-950/50 hover:bg-sky-900/60 border border-sky-800/60 active:scale-95 transition-all flex items-center gap-1.5"
             title={lang === 'el' ? 'Πρόγραμμα Στάσης' : 'Timetable'}
           >
-            <Calendar size={13} className="text-sky-400" />
-            <span className="hidden sm:inline">{lang === 'el' ? 'Πρόγραμμα' : 'Timetable'}</span>
+            <Calendar size={14} />
+            <span>{lang === 'el' ? 'Πρόγραμμα' : 'Timetable'}</span>
           </button>
         </div>
       </div>
@@ -142,13 +142,13 @@ export const LiveArrivalsCard: React.FC<LiveArrivalsCardProps> = ({
                   : 'No buses approaching within 30 minutes (normal off-peak or late night).'}
               </p>
             </div>
-            <div className="pt-1">
+            <div className="pt-2">
               <button
                 onClick={onOpenTimetable}
-                className="px-3.5 py-2 rounded-xl text-xs font-medium text-sky-400 hover:text-sky-300 bg-slate-900 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all inline-flex items-center gap-1.5"
+                className="h-11 px-5 rounded-xl text-xs sm:text-sm font-bold text-sky-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 active:scale-95 transition-all inline-flex items-center gap-2 shadow-sm"
               >
-                <Calendar size={13} />
-                <span>{lang === 'el' ? 'Πρόγραμμα Δρομολογίων' : 'View Timetable'}</span>
+                <Calendar size={15} />
+                <span>{lang === 'el' ? 'Προβολή Προγράμματος Δρομολογίων' : 'View Scheduled Timetable'}</span>
               </button>
             </div>
           </div>

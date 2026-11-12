@@ -45,11 +45,20 @@ export interface LiveStopData {
 }
 
 export interface ScheduledTrip {
+  id?: number;
+  day?: number;
   tripCode?: string;
   lineCode?: string;
   lineName?: string;
+  lineColor?: string;
+  lineTextColor?: string;
+  routeCode?: string;
   routeName?: string;
   departureTime?: string;
+  tripTime?: string;
+  hour?: number;
+  minute?: number;
+  totalMinutes?: number;
 }
 
 export interface FavoriteStop {

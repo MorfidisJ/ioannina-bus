@@ -102,7 +102,7 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="w-10 h-10 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center transition-colors"
           >
             <X size={18} />
           </button>
@@ -111,8 +111,8 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
         {/* Search Input & Action Tools */}
         <div className="p-3 border-b border-slate-800/80 bg-slate-950/50 space-y-2.5">
           <div className="flex items-center gap-2">
-            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700/80 focus-within:border-sky-500 transition-colors">
-              <Search size={15} className="text-slate-400 flex-shrink-0" />
+            <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 focus-within:border-sky-500 transition-colors">
+              <Search size={16} className="text-slate-400 flex-shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
@@ -122,8 +122,8 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
                 autoFocus
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-200">
-                  <X size={14} />
+                <button onClick={() => setSearchQuery('')} className="p-1 text-slate-400 hover:text-slate-200">
+                  <X size={15} />
                 </button>
               )}
             </div>
@@ -133,28 +133,28 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
               onClick={handleGetLocation}
               disabled={locating}
               title={lang === 'el' ? 'Κοντινότερες στάσεις (GPS)' : 'Nearby stops (GPS)'}
-              className={`p-2.5 rounded-xl border transition-all flex items-center justify-center flex-shrink-0 text-xs font-medium ${
+              className={`h-11 w-11 rounded-xl border transition-all flex items-center justify-center flex-shrink-0 text-xs font-medium active:scale-95 ${
                 userLocation
                   ? 'bg-sky-600 text-white border-sky-500'
-                  : 'bg-slate-900 text-slate-300 border-slate-800 hover:text-white hover:bg-slate-800'
+                  : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'
               }`}
             >
-              <Crosshair size={16} className={locating ? 'animate-spin' : ''} />
+              <Crosshair size={18} className={locating ? 'animate-spin' : ''} />
             </button>
           </div>
 
-          {/* Line Filter Chips */}
+          {/* Line Filter Chips - Touch-friendly height */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
-            <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1 flex-shrink-0 mr-1">
-              <Filter size={11} />
+            <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1 flex-shrink-0 mr-1">
+              <Filter size={12} />
               <span>{lang === 'el' ? 'Γραμμή:' : 'Line:'}</span>
             </span>
             <button
               onClick={() => setSelectedLineFilter('all')}
-              className={`px-2 py-0.5 rounded-md font-medium text-xs transition-all whitespace-nowrap ${
+              className={`h-8 px-3 rounded-lg font-bold text-xs transition-all whitespace-nowrap active:scale-95 ${
                 selectedLineFilter === 'all'
-                  ? 'bg-slate-200 text-slate-900 font-semibold'
-                  : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                  ? 'bg-sky-600 text-white shadow-sm'
+                  : 'bg-slate-800 text-slate-300 hover:text-white'
               }`}
             >
               {lang === 'el' ? 'Όλες' : 'All'}
@@ -163,9 +163,9 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
               <button
                 key={line.code}
                 onClick={() => setSelectedLineFilter(line.code)}
-                className={`px-2 py-0.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
+                className={`h-8 px-3 rounded-lg text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${
                   selectedLineFilter === line.code
-                    ? 'bg-sky-500 text-white shadow-sm'
+                    ? 'bg-sky-600 text-white shadow-sm'
                     : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                 }`}
               >
@@ -242,6 +242,16 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
               );
             })
           )}
+        </div>
+
+        {/* Mobile Bottom Close Bar */}
+        <div className="p-3 border-t border-slate-800 bg-slate-950 flex-shrink-0 sm:hidden">
+          <button
+            onClick={onClose}
+            className="w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-white font-bold text-sm flex items-center justify-center transition-all shadow-sm"
+          >
+            <span>{lang === 'el' ? 'Κλείσιμο' : 'Close'}</span>
+          </button>
         </div>
       </div>
     </div>
