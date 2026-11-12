@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, X, Star, MapPin, Navigation, Bus, Filter, Crosshair } from 'lucide-react';
+import { Search, X, Star, Navigation, Bus, Filter, Crosshair } from 'lucide-react';
 import { BusStop, BusLine } from '../types';
 import { matchesStopQuery, calculateDistanceMeters } from '../services/telematics';
 
@@ -41,7 +41,7 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
         setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocating(false);
       },
-      err => {
+      () => {
         alert(lang === 'el' ? 'Δεν ήταν δυνατή η λήψη της τοποθεσίας σας.' : 'Unable to retrieve location.');
         setLocating(false);
       },
@@ -83,58 +83,46 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
-      <div
-        style={{
-          backgroundColor: '#161a22',
-          boxShadow: '10px 10px 30px #0b0d11, -10px -10px 30px #212733'
-        }}
-        className="w-full max-w-2xl max-h-[90vh] rounded-3xl flex flex-col border border-slate-700/40 overflow-hidden"
-      >
-        {/* Modal Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between gap-3">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="w-full sm:max-w-xl max-h-[92vh] sm:max-h-[85vh] rounded-t-2xl sm:rounded-2xl bg-slate-900 border border-slate-800 flex flex-col overflow-hidden shadow-2xl">
+        {/* Header */}
+        <div className="p-3.5 sm:p-4 border-b border-slate-800 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-sky-950/80 text-sky-400 border border-sky-800/40">
-              <Bus size={18} />
+            <div className="w-8 h-8 rounded-lg bg-sky-950/80 text-sky-400 border border-sky-800/40 flex items-center justify-center">
+              <Bus size={16} />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-100">
-                {lang === 'el' ? 'Αναζήτηση Στάσεων Ιωαννίνων' : 'Search Ioannina Bus Stops'}
+              <h2 className="text-sm sm:text-base font-bold text-slate-100">
+                {lang === 'el' ? 'Αναζήτηση Στάσεων' : 'Search Stops'}
               </h2>
-              <p className="text-xs text-slate-400">
-                {allStops.length} {lang === 'el' ? 'καταγεγραμμένες στάσεις Αστικού ΚΤΕΛ' : 'registered KTEL stops'}
+              <p className="text-[11px] text-slate-400">
+                {allStops.length} {lang === 'el' ? 'καταγεγραμμένες στάσεις' : 'registered stops'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-200 active:scale-95 rounded-xl hover:bg-slate-800 transition-all"
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Search Input & Action Tools */}
-        <div className="p-4 border-b border-slate-800 bg-[#12151b] space-y-3">
+        <div className="p-3 border-b border-slate-800/80 bg-slate-950/50 space-y-2.5">
           <div className="flex items-center gap-2">
-            <div
-              style={{
-                backgroundColor: '#1a1f26',
-                boxShadow: 'inset 2px 2px 5px #111419, inset -2px -2px 5px #232a33'
-              }}
-              className="flex-1 flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl border border-slate-700/40"
-            >
-              <Search size={16} className="text-slate-400 flex-shrink-0" />
+            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700/80 focus-within:border-sky-500 transition-colors">
+              <Search size={15} className="text-slate-400 flex-shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder={lang === 'el' ? 'Αναζήτηση με όνομα ή κωδικό στάσης (π.χ. 930, Δικαστικό, filosofiki)...' : 'Search by name or stop code (e.g. 930, filosofiki)...'}
+                placeholder={lang === 'el' ? 'Όνομα ή ID (π.χ. 930, Δικαστικό, filosofiki)...' : 'Name or stop ID (e.g. 930, filosofiki)...'}
                 className="bg-transparent text-xs sm:text-sm text-slate-100 placeholder:text-slate-500 outline-none w-full"
                 autoFocus
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="text-slate-500 hover:text-slate-300">
+                <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-200">
                   <X size={14} />
                 </button>
               )}
@@ -144,30 +132,28 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
             <button
               onClick={handleGetLocation}
               disabled={locating}
-              title={lang === 'el' ? 'Εύρεση στάσεων κοντά μου' : 'Find stops near me'}
-              style={{
-                backgroundColor: userLocation ? '#0369a1' : '#1e232a',
-                boxShadow: '3px 3px 7px #111419, -3px -3px 7px #232a33'
-              }}
-              className={`p-3 rounded-2xl transition-all active:scale-95 flex items-center justify-center flex-shrink-0 ${
-                userLocation ? 'text-white' : 'text-sky-400 hover:text-sky-300'
+              title={lang === 'el' ? 'Κοντινότερες στάσεις (GPS)' : 'Nearby stops (GPS)'}
+              className={`p-2.5 rounded-xl border transition-all flex items-center justify-center flex-shrink-0 text-xs font-medium ${
+                userLocation
+                  ? 'bg-sky-600 text-white border-sky-500'
+                  : 'bg-slate-900 text-slate-300 border-slate-800 hover:text-white hover:bg-slate-800'
               }`}
             >
-              <Crosshair size={18} className={locating ? 'animate-spin' : ''} />
+              <Crosshair size={16} className={locating ? 'animate-spin' : ''} />
             </button>
           </div>
 
           {/* Line Filter Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
-            <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1 flex-shrink-0 mr-1">
-              <Filter size={12} />
+            <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1 flex-shrink-0 mr-1">
+              <Filter size={11} />
               <span>{lang === 'el' ? 'Γραμμή:' : 'Line:'}</span>
             </span>
             <button
               onClick={() => setSelectedLineFilter('all')}
-              className={`px-2.5 py-1 rounded-xl font-semibold transition-all whitespace-nowrap ${
+              className={`px-2 py-0.5 rounded-md font-medium text-xs transition-all whitespace-nowrap ${
                 selectedLineFilter === 'all'
-                  ? 'bg-amber-400 text-slate-950 font-bold'
+                  ? 'bg-slate-200 text-slate-900 font-semibold'
                   : 'bg-slate-800 text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -177,13 +163,9 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
               <button
                 key={line.code}
                 onClick={() => setSelectedLineFilter(line.code)}
-                style={selectedLineFilter === line.code ? {
-                  backgroundColor: line.color,
-                  color: line.textColor || '#ffffff'
-                } : {}}
-                className={`px-2.5 py-1 rounded-xl font-bold transition-all whitespace-nowrap ${
+                className={`px-2 py-0.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
                   selectedLineFilter === line.code
-                    ? 'shadow-md scale-105'
+                    ? 'bg-sky-500 text-white shadow-sm'
                     : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                 }`}
               >
@@ -194,13 +176,13 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
         </div>
 
         {/* Results List */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto p-2.5 sm:p-3 space-y-1.5 scrollbar-thin">
           {filteredStops.length === 0 ? (
             <div className="py-12 text-center text-slate-500 text-xs">
-              {lang === 'el' ? 'Δεν βρέθηκαν στάσεις που να ταιριάζουν στην αναζήτηση.' : 'No stops found matching your search.'}
+              {lang === 'el' ? 'Δεν βρέθηκαν στάσεις που να ταιριάζουν.' : 'No stops found matching your search.'}
             </div>
           ) : (
-            filteredStops.slice(0, 100).map(stop => {
+            filteredStops.slice(0, 80).map(stop => {
               const isFav = favoriteCodes.has(stop.code);
               return (
                 <div
@@ -209,50 +191,42 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
                     onSelectStop(stop.code);
                     onClose();
                   }}
-                  style={{
-                    backgroundColor: '#1a1f26',
-                    boxShadow: '2px 2px 6px #111419, -2px -2px 6px #232a33'
-                  }}
-                  className="p-3 sm:p-3.5 rounded-2xl flex items-center justify-between border border-slate-800 hover:border-slate-700 cursor-pointer active:scale-[0.99] transition-all group"
+                  className="p-2.5 sm:p-3 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/70 flex items-center justify-between gap-2.5 cursor-pointer transition-colors group"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <button
                       onClick={e => {
                         e.stopPropagation();
                         onToggleFavorite(stop.code);
                       }}
-                      title={isFav ? (lang === 'el' ? 'Αφαίρεση από αγαπημένα' : 'Remove from favorites') : (lang === 'el' ? 'Προσθήκη στα αγαπημένα' : 'Add to favorites')}
-                      className={`p-2 rounded-xl transition-all ${
-                        isFav
-                          ? 'text-amber-400 hover:text-amber-300 bg-amber-950/30'
-                          : 'text-slate-600 hover:text-amber-400 hover:bg-slate-800'
-                      }`}
+                      title={isFav ? (lang === 'el' ? 'Αφαίρεση' : 'Remove') : (lang === 'el' ? 'Αποθήκευση' : 'Save')}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-amber-400 flex-shrink-0"
                     >
-                      <Star size={16} className={isFav ? 'fill-amber-400' : ''} />
+                      <Star size={15} className={isFav ? 'fill-amber-400 text-amber-400' : ''} />
                     </button>
 
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-bold text-slate-100 group-hover:text-sky-300 transition-colors">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs sm:text-sm font-semibold text-slate-200 group-hover:text-white truncate">
                           {lang === 'el' ? stop.name_el : stop.name_en}
                         </span>
-                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-900 text-sky-400 border border-slate-700/50">
+                        <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700/50">
                           #{stop.code}
                         </span>
                         {stop.distanceMeters !== undefined && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800/50 flex items-center gap-0.5">
-                            <Navigation size={9} />
+                          <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/50 flex items-center gap-0.5">
+                            <Navigation size={8} />
                             <span>{stop.distanceMeters}m</span>
                           </span>
                         )}
                       </div>
 
-                      {/* Lines Serving this Stop */}
-                      <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                      {/* Serving Lines */}
+                      <div className="flex items-center gap-1 mt-1 flex-wrap">
                         {stop.lines.map(lineCode => (
                           <span
                             key={lineCode}
-                            className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700/40"
+                            className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300"
                           >
                             {lineCode}
                           </span>
@@ -261,11 +235,8 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
                     </div>
                   </div>
 
-                  <div className="text-right flex items-center gap-2 text-slate-500 group-hover:text-slate-300">
-                    <span className="text-xs font-semibold hidden sm:inline">
-                      {lang === 'el' ? 'Επιλογή' : 'Select'}
-                    </span>
-                    <span className="text-sm">→</span>
+                  <div className="text-slate-500 group-hover:text-slate-300 text-xs font-medium flex-shrink-0 px-1">
+                    →
                   </div>
                 </div>
               );
@@ -276,4 +247,3 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
     </div>
   );
 };
-

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, MapPin, Navigation, Bus, ExternalLink, Share2 } from 'lucide-react';
+import { Star, MapPin, Navigation, Bus } from 'lucide-react';
 import { BusStop } from '../types';
 
 interface StopDetailsHeaderProps {
@@ -22,108 +22,73 @@ export const StopDetailsHeader: React.FC<StopDetailsHeaderProps> = ({
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stop.name_el + ' Ιωάννινα')}`;
 
   return (
-    <div
-      style={{
-        backgroundColor: '#1a1f26',
-        boxShadow: '6px 6px 16px #111419, -6px -6px 16px #232a33',
-        border: '1px solid rgba(51, 65, 85, 0.3)'
-      }}
-      className="p-5 sm:p-6 rounded-3xl mb-4"
-    >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        {/* Stop Info */}
-        <div className="flex items-start gap-3.5">
-          <div
-            style={{
-              backgroundColor: '#12161c',
-              boxShadow: '2px 2px 6px #111419, -2px -2px 6px #232a33'
-            }}
-            className="p-3 rounded-2xl text-sky-400 border border-slate-700/50 flex-shrink-0"
-          >
-            <Bus size={24} />
-          </div>
-
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] font-bold text-sky-400 uppercase tracking-wider">
-                {lang === 'el' ? 'Ενεργή Στάση' : 'Active Stop'}
-              </span>
-              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-slate-900 text-amber-300 border border-slate-700/60">
-                Stop ID: {stop.code}
-              </span>
-            </div>
-
-            <h1 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight mt-0.5">
-              {lang === 'el' ? stop.name_el : stop.name_en}
-            </h1>
-
-            {/* Serving lines */}
-            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-              <span className="text-[11px] font-medium text-slate-400 mr-1">
-                {lang === 'el' ? 'Διερχόμενες γραμμές:' : 'Serving lines:'}
-              </span>
-              {stop.lines.map(line => (
-                <span
-                  key={line}
-                  className="text-xs font-bold px-2 py-0.5 rounded-lg bg-slate-800 text-slate-200 border border-slate-700/40"
-                >
-                  {line}
-                </span>
-              ))}
-            </div>
-          </div>
+    <div className="bg-slate-900/95 border border-slate-800 rounded-2xl p-4 sm:p-5 mb-3 shadow-sm">
+      {/* Top row: Status & ID */}
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+          <Bus size={14} className="text-sky-400" />
+          <span>{lang === 'el' ? 'Επιλεγμένη Στάση' : 'Selected Stop'}</span>
         </div>
+        <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/60">
+          ID: {stop.code}
+        </span>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          {/* Favorite Toggle */}
-          <button
-            onClick={onToggleFavorite}
-            style={{
-              backgroundColor: isFavorite ? '#78350f' : '#1e232a',
-              boxShadow: '3px 3px 8px #111419, -3px -3px 8px #232a33'
-            }}
-            className={`p-3 rounded-2xl transition-all active:scale-95 border ${
-              isFavorite
-                ? 'text-amber-400 border-amber-500/50'
-                : 'text-slate-400 hover:text-amber-400 border-slate-700/40'
-            }`}
-            title={isFavorite ? (lang === 'el' ? 'Αφαίρεση από αγαπημένα' : 'Remove favorite') : (lang === 'el' ? 'Προσθήκη στα αγαπημένα' : 'Add to favorites')}
-          >
-            <Star size={18} className={isFavorite ? 'fill-amber-400' : ''} />
-          </button>
+      {/* Stop Name */}
+      <h1 className="text-lg sm:text-xl font-bold text-slate-100 tracking-tight leading-snug">
+        {lang === 'el' ? stop.name_el : stop.name_en}
+      </h1>
 
-          {/* Google Maps Directions */}
-          <a
-            href={googleMapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              backgroundColor: '#1e232a',
-              boxShadow: '3px 3px 8px #111419, -3px -3px 8px #232a33'
-            }}
-            className="p-3 rounded-2xl text-sky-400 hover:text-sky-300 border border-slate-700/40 active:scale-95 transition-all flex items-center gap-1.5 text-xs font-semibold"
-            title={lang === 'el' ? 'Οδηγίες μετάβασης στους Χάρτες Google' : 'Directions in Google Maps'}
+      {/* Serving lines */}
+      <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+        <span className="text-[11px] text-slate-400 mr-0.5">
+          {lang === 'el' ? 'Γραμμές:' : 'Lines:'}
+        </span>
+        {stop.lines.map(line => (
+          <span
+            key={line}
+            className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700/50"
           >
-            <Navigation size={17} />
-            <span className="hidden sm:inline">Maps</span>
-          </a>
+            {line}
+          </span>
+        ))}
+      </div>
 
-          {/* Change Stop Button */}
-          <button
-            onClick={onOpenSearch}
-            style={{
-              backgroundColor: '#1e232a',
-              boxShadow: '3px 3px 8px #111419, -3px -3px 8px #232a33'
-            }}
-            className="px-4 py-3 rounded-2xl text-xs font-bold text-slate-200 hover:text-white border border-slate-700/40 active:scale-95 transition-all flex items-center gap-2"
-          >
-            <MapPin size={15} className="text-amber-400" />
-            <span>{lang === 'el' ? 'Αλλαγή Στάσης' : 'Change Stop'}</span>
-          </button>
-        </div>
+      {/* Mobile Action Buttons Bar */}
+      <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-800/80">
+        {/* Toggle Favorite */}
+        <button
+          onClick={onToggleFavorite}
+          className={`py-2 px-2.5 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition-all active:scale-95 border ${
+            isFavorite
+              ? 'bg-amber-950/40 text-amber-300 border-amber-800/60'
+              : 'bg-slate-800/70 text-slate-300 border-slate-700/60 hover:text-white'
+          }`}
+        >
+          <Star size={14} className={isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-400'} />
+          <span className="truncate">{isFavorite ? (lang === 'el' ? 'Αγαπημένη' : 'Saved') : (lang === 'el' ? 'Αγαπημένο' : 'Favorite')}</span>
+        </button>
+
+        {/* Google Maps Directions */}
+        <a
+          href={googleMapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="py-2 px-2.5 rounded-xl text-xs font-medium bg-slate-800/70 text-slate-300 border border-slate-700/60 hover:text-white flex items-center justify-center gap-1.5 transition-all active:scale-95"
+        >
+          <Navigation size={13} className="text-sky-400" />
+          <span>{lang === 'el' ? 'Χάρτης' : 'Map'}</span>
+        </a>
+
+        {/* Change Stop Button */}
+        <button
+          onClick={onOpenSearch}
+          className="py-2 px-2.5 rounded-xl text-xs font-medium bg-sky-600/20 text-sky-300 border border-sky-500/30 hover:bg-sky-600/30 flex items-center justify-center gap-1.5 transition-all active:scale-95"
+        >
+          <MapPin size={13} />
+          <span>{lang === 'el' ? 'Αλλαγή' : 'Change'}</span>
+        </button>
       </div>
     </div>
   );
 };
-

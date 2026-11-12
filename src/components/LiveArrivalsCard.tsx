@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, Clock, Bus, Radio, ExternalLink, Calendar, AlertCircle } from 'lucide-react';
+import { RefreshCw, Clock, Calendar } from 'lucide-react';
 import { BusStop, LiveVehicle } from '../types';
 
 interface LiveArrivalsCardProps {
@@ -26,166 +26,129 @@ export const LiveArrivalsCard: React.FC<LiveArrivalsCardProps> = ({
   lang
 }) => {
   return (
-    <div
-      style={{
-        backgroundColor: '#1a1f26',
-        boxShadow: '6px 6px 16px #111419, -6px -6px 16px #232a33',
-        border: isLive ? '1.5px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(51, 65, 85, 0.3)'
-      }}
-      className="p-5 sm:p-6 rounded-3xl transition-all mb-6"
-    >
-      {/* Header bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <span className={`w-3.5 h-3.5 rounded-full block ${isLive ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-            {isLive && (
-              <span className="w-3.5 h-3.5 rounded-full bg-emerald-400 absolute inset-0 animate-ping opacity-75" />
-            )}
-          </div>
+    <div className="bg-slate-900/95 border border-slate-800 rounded-2xl p-4 sm:p-5 mb-4 shadow-sm">
+      {/* Header Bar */}
+      <div className="flex items-center justify-between gap-3 pb-3.5 border-b border-slate-800/80">
+        <div className="flex items-center gap-2">
+          <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isLive ? 'bg-emerald-400' : 'bg-slate-500'}`} />
           <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base sm:text-lg font-bold text-slate-100">
-                {lang === 'el' ? 'Ζωντανές Αφίξεις Λεωφορείων' : 'Real-Time Bus Arrivals'}
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-100">
+                {lang === 'el' ? 'Ζωντανές Αφίξεις' : 'Live Arrivals'}
               </h2>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
                 isLive
-                  ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/60'
-                  : 'bg-slate-800 text-slate-400 border border-slate-700/60'
+                  ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-800/60'
+                  : 'bg-slate-800 text-slate-400'
               }`}>
-                {isLive ? 'LIVE GPS' : (lang === 'el' ? 'ΣΕ ΑΝΑΜΟΝΗ' : 'STANDBY')}
+                {isLive ? 'LIVE' : (lang === 'el' ? 'Αναμονή' : 'Standby')}
               </span>
             </div>
-            <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
-              <span>{lang === 'el' ? stop.name_el : stop.name_en}</span>
-              <span className="text-sky-400 font-mono font-bold">#{stop.code}</span>
-            </div>
+            {lastUpdated && (
+              <span className="text-[11px] text-slate-500 block">
+                {lang === 'el' ? `Ενημέρωση: ${lastUpdated}` : `Updated: ${lastUpdated}`}
+              </span>
+            )}
           </div>
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2 ml-auto">
-          {lastUpdated && (
-            <span className="text-[11px] text-slate-500 hidden sm:inline">
-              {lang === 'el' ? `Ενημέρωση: ${lastUpdated}` : `Updated: ${lastUpdated}`}
-            </span>
-          )}
+        <div className="flex items-center gap-1.5">
           <button
             onClick={onRefresh}
             disabled={loading}
-            style={{
-              backgroundColor: '#1a1f26',
-              boxShadow: '3px 3px 7px #111419, -3px -3px 7px #232a33'
-            }}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-400 hover:text-emerald-300 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-50 border border-slate-700/30"
+            className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-50"
+            title={lang === 'el' ? 'Ανανέωση' : 'Refresh'}
           >
-            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-            <span>{lang === 'el' ? 'Ανανέωση' : 'Refresh'}</span>
+            <RefreshCw size={13} className={loading ? 'animate-spin text-sky-400' : ''} />
+            <span className="hidden sm:inline">{lang === 'el' ? 'Ανανέωση' : 'Refresh'}</span>
           </button>
           <button
             onClick={onOpenTimetable}
-            style={{
-              backgroundColor: '#1a1f26',
-              boxShadow: '3px 3px 7px #111419, -3px -3px 7px #232a33'
-            }}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-sky-400 hover:text-sky-300 active:scale-95 transition-all flex items-center gap-1.5 border border-slate-700/30"
+            className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 active:scale-95 transition-all flex items-center gap-1.5"
+            title={lang === 'el' ? 'Πρόγραμμα Στάσης' : 'Timetable'}
           >
-            <Calendar size={13} />
-            <span>{lang === 'el' ? 'Πρόγραμμα Στάσης' : 'Timetable'}</span>
+            <Calendar size={13} className="text-sky-400" />
+            <span className="hidden sm:inline">{lang === 'el' ? 'Πρόγραμμα' : 'Timetable'}</span>
           </button>
         </div>
       </div>
 
       {/* Live Arrivals List */}
-      <div className="mt-5">
+      <div className="mt-3.5">
         {isLive && vehicles.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {vehicles.map((v, idx) => (
               <div
                 key={`${v.vehicleCode}-${v.line}-${idx}`}
-                style={{
-                  backgroundColor: '#1a1f26',
-                  boxShadow: 'inset 2px 2px 5px #111419, inset -2px -2px 5px #232a33'
-                }}
-                className="p-4 rounded-2xl flex items-center justify-between border border-emerald-500/20 hover:border-emerald-500/40 transition-colors"
+                className="p-3 sm:p-3.5 rounded-xl bg-slate-800/40 border border-slate-800 flex items-center justify-between gap-3 hover:bg-slate-800/60 transition-colors"
               >
-                <div className="flex items-center gap-3.5">
-                  <div
-                    style={{
-                      backgroundColor: '#12161c',
-                      boxShadow: '2px 2px 5px #111419, -2px -2px 5px #232a33'
-                    }}
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center font-extrabold text-base text-amber-300 border border-slate-700/50"
-                  >
+                {/* Line number and details */}
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-xl bg-slate-800 border border-slate-700 flex-shrink-0 flex items-center justify-center font-bold text-base text-white">
                     {v.line}
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-slate-100">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-xs sm:text-sm font-semibold text-slate-100 truncate">
                         {v.routeName || v.lineName || (lang === 'el' ? `Γραμμή ${v.line}` : `Line ${v.line}`)}
                       </h4>
                       {v.vehicleCode && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-900 text-slate-400 font-mono font-semibold border border-slate-800">
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-mono font-medium flex-shrink-0 border border-slate-700/50">
                           #{v.vehicleCode}
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-emerald-400/90 font-medium mt-0.5">
-                      {lang === 'el' ? 'Εν κινήσει προς τη στάση' : 'Approaching this stop'}
+                    <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                      {lang === 'el' ? 'Προς τη στάση' : 'Approaching stop'}
                     </div>
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <div className="text-lg font-black text-emerald-400 flex items-center justify-end gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>
-                      {v.minutesUntil === 0
-                        ? (lang === 'el' ? 'Φτάνει τώρα!' : 'Arriving now!')
-                        : (lang === 'el' ? `σε ${v.minutesUntil} λεπτά` : `in ${v.minutesUntil} mins`)}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-slate-500 block font-semibold mt-0.5">
-                    {lang === 'el' ? 'Live δορυφορικό στίγμα' : 'Live GPS satellite fix'}
-                  </span>
+                {/* Big countdown timer for mobile readability */}
+                <div className="text-right flex-shrink-0">
+                  {v.minutesUntil === 0 ? (
+                    <div className="text-sm sm:text-base font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 px-2.5 py-1 rounded-lg">
+                      {lang === 'el' ? 'Τώρα' : 'Now'}
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="text-xl sm:text-2xl font-black text-emerald-400 leading-none">
+                        {v.minutesUntil}<span className="text-xs font-semibold text-slate-400 ml-0.5">{lang === 'el' ? 'λεπ.' : 'min'}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
+                        GPS Live
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div
-            style={{
-              backgroundColor: '#14181f',
-              boxShadow: 'inset 2px 2px 6px #101318, inset -2px -2px 6px #202630'
-            }}
-            className="p-6 rounded-2xl text-center space-y-3 border border-slate-800"
-          >
-            <div className="p-3 w-12 h-12 rounded-2xl bg-slate-800/80 text-amber-400/80 mx-auto flex items-center justify-center">
-              <Clock size={22} />
+          <div className="py-6 sm:py-8 px-4 rounded-xl bg-slate-950/40 border border-slate-800/80 text-center space-y-2.5">
+            <div className="w-10 h-10 rounded-xl bg-slate-800 text-slate-400 mx-auto flex items-center justify-center">
+              <Clock size={18} />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-200">
+              <h4 className="text-xs sm:text-sm font-semibold text-slate-200">
                 {lang === 'el'
-                  ? 'Δεν εκπέμπει λεωφορείο αυτή τη στιγμή'
-                  : 'No bus currently broadcasting GPS'}
+                  ? 'Δεν εντοπίζονται ενεργά λεωφορεία αυτή τη στιγμή'
+                  : 'No active buses transmitting GPS at this moment'}
               </h4>
-              <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
+              <p className="text-[11px] text-slate-400 mt-1 max-w-sm mx-auto leading-relaxed">
                 {lang === 'el'
-                  ? 'Δεν υπάρχει όχημα στο παράθυρο των επόμενων 30 λεπτών (σύνηθες εκτός ωρών αιχμής ή τη νύχτα). Μπορείτε να δείτε το επίσημο τακτικό πρόγραμμα της στάσης παρακάτω.'
-                  : 'No active vehicles transmitting within the 30-minute window (normal off-peak/night). You can inspect the scheduled departures timetable below.'}
+                  ? 'Δεν υπάρχουν οχήματα εντός των επόμενων 30 λεπτών (σύνηθες εκτός ωρών αιχμής ή νυχτερινές ώρες).'
+                  : 'No buses approaching within 30 minutes (normal off-peak or late night).'}
               </p>
             </div>
-            <div className="pt-2">
+            <div className="pt-1">
               <button
                 onClick={onOpenTimetable}
-                style={{
-                  backgroundColor: '#1a1f26',
-                  boxShadow: '3px 3px 8px #101318, -3px -3px 8px #202630'
-                }}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-sky-400 hover:text-sky-300 active:scale-95 transition-all inline-flex items-center gap-2 border border-slate-700/40"
+                className="px-3.5 py-2 rounded-xl text-xs font-medium text-sky-400 hover:text-sky-300 bg-slate-900 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all inline-flex items-center gap-1.5"
               >
-                <Calendar size={14} />
-                <span>{lang === 'el' ? 'Προβολή Προγράμματος Δρομολογίων' : 'View Scheduled Timetable'}</span>
+                <Calendar size={13} />
+                <span>{lang === 'el' ? 'Πρόγραμμα Δρομολογίων' : 'View Timetable'}</span>
               </button>
             </div>
           </div>
@@ -194,4 +157,3 @@ export const LiveArrivalsCard: React.FC<LiveArrivalsCardProps> = ({
     </div>
   );
 };
-

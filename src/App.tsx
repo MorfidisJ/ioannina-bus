@@ -15,10 +15,10 @@ const LANG_STORAGE_KEY = 'ioannina_bus_lang_v1';
 
 // Initial pre-configured popular stops for Ioannina
 const DEFAULT_FAVORITES: FavoriteStop[] = [
-  { code: '930', customName: 'Φιλοσοφική / Εστιατόριο (Λέσχη)', addedAt: 1, order: 0 },
-  { code: '400', customName: 'Δικαστικό Μέγαρο (Κέντρο)', addedAt: 2, order: 1 },
+  { code: '930', customName: 'Φιλοσοφική (Λέσχη)', addedAt: 1, order: 0 },
+  { code: '400', customName: 'Δικαστικό Μέγαρο', addedAt: 2, order: 1 },
   { code: '451', customName: 'Πανεπιστημιακό Νοσοκομείο', addedAt: 3, order: 2 },
-  { code: '201', customName: 'Πλάτανος (Κεντρική Πλατεία)', addedAt: 4, order: 3 },
+  { code: '201', customName: 'Πλάτανος', addedAt: 4, order: 3 },
   { code: '447', customName: 'Πύλη Πανεπιστημίου', addedAt: 5, order: 4 }
 ];
 
@@ -133,59 +133,42 @@ export function App() {
   };
 
   return (
-    <div style={{ backgroundColor: '#12161c', minHeight: '100vh', color: '#f1f5f9', fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
+    <div className="bg-[#0b0f19] min-h-screen text-slate-100 flex flex-col font-sans selection:bg-sky-500/30 selection:text-white">
       {/* App Header */}
-      <header className="border-b border-slate-800/80 bg-[#141820]/90 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div
-              style={{
-                backgroundColor: '#1a1f26',
-                boxShadow: '3px 3px 8px #111419, -3px -3px 8px #232a33'
-              }}
-              className="w-10 h-10 rounded-2xl flex items-center justify-center text-sky-400 border border-sky-500/20"
-            >
-              <Bus size={22} />
+      <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
+        <div className="max-w-lg mx-auto px-3.5 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-sky-400">
+              <Bus size={17} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-100">
-                  {lang === 'el' ? 'Αστικό ΚΤΕΛ Ιωαννίνων' : 'Ioannina City Transit'}
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-sm font-bold text-slate-100 leading-tight">
+                  {lang === 'el' ? 'Αστικό ΚΤΕΛ Ιωαννίνων' : 'Ioannina City Bus'}
                 </h1>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/90 text-emerald-300 border border-emerald-800/50 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Live</span>
-                </span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400" title="Telematics active" />
               </div>
-              <p className="text-[11px] text-slate-400">
-                {lang === 'el' ? 'Τηλεματική όλων των στάσεων & αγαπημένα' : 'Real-time telematics for all stops'}
+              <p className="text-[11px] text-slate-400 leading-none mt-0.5">
+                {lang === 'el' ? 'Ζωντανή τηλεματική στάσεων' : 'Live bus telematics'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Quick Search Button */}
+          <div className="flex items-center gap-1.5">
+            {/* Search Button */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              style={{
-                backgroundColor: '#1a1f26',
-                boxShadow: '3px 3px 8px #111419, -3px -3px 8px #232a33'
-              }}
-              className="p-2.5 rounded-xl text-slate-300 hover:text-white border border-slate-700/40 active:scale-95 transition-all flex items-center gap-2"
-              title={lang === 'el' ? 'Αναζήτηση σε όλες τις στάσεις' : 'Search all stops'}
+              className="p-2 rounded-lg text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 active:scale-95 transition-all flex items-center gap-1.5 text-xs font-medium"
+              title={lang === 'el' ? 'Αναζήτηση στάσης' : 'Search stop'}
             >
-              <Search size={16} />
-              <span className="text-xs font-bold hidden sm:inline">{lang === 'el' ? 'Στάσεις' : 'Stops'}</span>
+              <Search size={14} />
+              <span className="hidden sm:inline">{lang === 'el' ? 'Στάσεις' : 'Stops'}</span>
             </button>
 
             {/* Language Switcher */}
             <button
               onClick={() => setLang(l => l === 'el' ? 'en' : 'el')}
-              style={{
-                backgroundColor: '#1a1f26',
-                boxShadow: '3px 3px 8px #111419, -3px -3px 8px #232a33'
-              }}
-              className="px-3 py-2 rounded-xl text-xs font-bold text-amber-300 border border-slate-700/40 active:scale-95 transition-all"
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 active:scale-95 transition-all"
             >
               {lang === 'el' ? 'EN' : 'ΕΛ'}
             </button>
@@ -193,8 +176,8 @@ export function App() {
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-4xl mx-auto px-4 py-5 pb-24">
+      {/* Main Container - Mobile Centered View */}
+      <main className="max-w-lg mx-auto w-full px-3.5 py-3.5 flex-1">
         {/* Favorite Stops Bar */}
         <FavoriteStopsBar
           favorites={favorites}
@@ -261,4 +244,5 @@ export function App() {
     </div>
   );
 }
+
 export default App;
