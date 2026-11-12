@@ -276,3 +276,4 @@ export const StopSearchModal: React.FC<StopSearchModalProps> = ({
     </div>
   );
 };
+

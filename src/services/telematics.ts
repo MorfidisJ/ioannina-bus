@@ -88,3 +88,4 @@ export function matchesStopQuery(stopCode: string, nameEl: string, nameEn: strin
 
   return false;
 }
+

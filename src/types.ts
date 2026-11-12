@@ -58,3 +58,4 @@ export interface FavoriteStop {
   addedAt: number;
   order: number;
 }
+

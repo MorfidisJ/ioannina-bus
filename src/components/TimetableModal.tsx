@@ -185,3 +185,4 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
     </div>
   );
 };
+

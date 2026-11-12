@@ -232,64 +232,6 @@ export function App() {
             lang={lang}
           />
         )}
-
-        {/* Quick Area Shortcuts Card */}
-        <div
-          style={{
-            backgroundColor: '#161a22',
-            boxShadow: '4px 4px 12px #111419, -4px -4px 12px #212733'
-          }}
-          className="p-5 rounded-3xl border border-slate-800"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs uppercase tracking-wider font-bold text-slate-400">
-              {lang === 'el' ? 'Δημοφιλείς Στάσεις Πανεπιστημίου & Πόλης' : 'Popular Campus & City Stops'}
-            </h3>
-            <span className="text-[11px] text-slate-500 font-medium">
-              {lang === 'el' ? 'Γρήγορη επιλογή' : 'Quick jump'}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-            {[
-              { code: '930', el: 'Φιλοσοφική (Λέσχη)', en: 'Philosophy (Refectory)', desc: 'Κοντινότερη στάση στο εστιατόριο' },
-              { code: '400', el: 'Δικαστικό Μέγαρο', en: 'Court House Hub', desc: 'Κεντρική επιβίβαση στην πόλη' },
-              { code: '451', el: 'Πανεπ. Νοσοκομείο', en: 'Univ. Hospital', desc: 'Τέρμα γραμμών 16 & 17' },
-              { code: '447', el: 'Πύλη Πανεπιστημίου', en: 'Campus Main Gate', desc: 'Κεντρική είσοδος πανεπιστημίου' },
-              { code: '201', el: 'Πλάτανος', en: 'Platanos Hub', desc: 'Κέντρο πόλης / αγορά' },
-              { code: '202', el: 'Ρολόι', en: 'Clock Tower', desc: 'Κεντρική πλατεία Ιωαννίνων' }
-            ].map(item => (
-              <button
-                key={item.code}
-                onClick={() => setActiveStopCode(item.code)}
-                style={activeStopCode === item.code ? {
-                  backgroundColor: '#1a1f26',
-                  boxShadow: 'inset 2px 2px 5px #111419, inset -2px -2px 5px #232a33',
-                  border: '1px solid #f59e0b'
-                } : {
-                  backgroundColor: '#1a1f26',
-                  boxShadow: '2px 2px 5px #111419, -2px -2px 5px #232a33',
-                  border: '1px solid rgba(51, 65, 85, 0.3)'
-                }}
-                className={`p-3 rounded-2xl text-left transition-all active:scale-95 group ${
-                  activeStopCode === item.code ? 'border-amber-400/80' : 'hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs font-bold ${activeStopCode === item.code ? 'text-amber-300' : 'text-slate-200 group-hover:text-sky-300'}`}>
-                    {lang === 'el' ? item.el : item.en}
-                  </span>
-                  <span className="text-[10px] font-mono font-bold text-sky-400">
-                    #{item.code}
-                  </span>
-                </div>
-                <div className="text-[10px] text-slate-400 mt-1 truncate">
-                  {item.desc}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
       </main>
 
       {/* Stop Search Modal */}

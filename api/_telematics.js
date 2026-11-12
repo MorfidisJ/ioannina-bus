@@ -97,3 +97,4 @@ export async function getStopSchedule(stopCode, dayType = 1, lang = 'el') {
   }
   return [];
 }
+

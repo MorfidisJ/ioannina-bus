@@ -194,3 +194,4 @@ export const LiveArrivalsCard: React.FC<LiveArrivalsCardProps> = ({
     </div>
   );
 };
+

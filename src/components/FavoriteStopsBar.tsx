@@ -164,3 +164,4 @@ export const FavoriteStopsBar: React.FC<FavoriteStopsBarProps> = ({
     </div>
   );
 };
+

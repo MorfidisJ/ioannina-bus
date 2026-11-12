@@ -13,3 +13,4 @@ if (-not (Test-Path "node_modules")) {
 Write-Host "[2/2] Starting local Vite development server..." -ForegroundColor Green
 Write-Host "Local URL: http://localhost:5174" -ForegroundColor Green
 npm run dev
+
