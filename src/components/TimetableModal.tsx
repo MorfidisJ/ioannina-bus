@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Calendar, RefreshCw, Clock, Filter, Check } from 'lucide-react';
+import { X, Calendar, RefreshCw, Clock, Filter } from 'lucide-react';
 import { BusStop, ScheduledTrip } from '../types';
 import { fetchStopSchedule } from '../services/telematics';
 
@@ -314,17 +314,6 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
               );
             })
           )}
-        </div>
-
-        {/* Sticky Mobile Bottom Close Bar (48px tall for easy thumb touch) */}
-        <div className="p-3 border-t border-slate-800 bg-slate-950 flex-shrink-0 sm:hidden">
-          <button
-            onClick={onClose}
-            className="w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm"
-          >
-            <Check size={16} />
-            <span>{lang === 'el' ? 'Κλείσιμο Προγράμματος' : 'Close Timetable'}</span>
-          </button>
         </div>
       </div>
     </div>
