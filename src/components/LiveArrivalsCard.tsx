@@ -52,24 +52,24 @@ export const LiveArrivalsCard: React.FC<LiveArrivalsCardProps> = ({
           </div>
         </div>
 
-        {/* Action Controls */}
+        {/* Action Controls - Icons only */}
         <div className="flex items-center gap-2">
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="h-10 px-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700/80 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-50"
+            className="w-10 h-10 rounded-xl text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700/80 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50"
             title={lang === 'el' ? 'Ανανέωση' : 'Refresh'}
+            aria-label={lang === 'el' ? 'Ανανέωση' : 'Refresh'}
           >
-            <RefreshCw size={14} className={loading ? 'animate-spin text-sky-400' : ''} />
-            <span>{lang === 'el' ? 'Ανανέωση' : 'Refresh'}</span>
+            <RefreshCw size={16} className={loading ? 'animate-spin text-sky-400' : ''} />
           </button>
           <button
             onClick={onOpenTimetable}
-            className="h-10 px-3 rounded-xl text-xs font-semibold text-sky-300 hover:text-white bg-sky-950/50 hover:bg-sky-900/60 border border-sky-800/60 active:scale-95 transition-all flex items-center gap-1.5"
+            className="w-10 h-10 rounded-xl text-sky-300 hover:text-white bg-sky-950/50 hover:bg-sky-900/60 border border-sky-800/60 active:scale-95 transition-all flex items-center justify-center"
             title={lang === 'el' ? 'Πρόγραμμα Στάσης' : 'Timetable'}
+            aria-label={lang === 'el' ? 'Πρόγραμμα Στάσης' : 'Timetable'}
           >
-            <Calendar size={14} />
-            <span>{lang === 'el' ? 'Πρόγραμμα' : 'Timetable'}</span>
+            <Calendar size={16} />
           </button>
         </div>
       </div>
