@@ -80,15 +80,3 @@ g:\ioannina-bus\
 └── vercel.json              # Zero-config deployment for Vercel
 ```
 
----
-
-## ☁️ Deploy to Vercel
-
-1. Push this repository to GitHub:
-   ```bash
-   git add .
-   git commit -m "feat: complete ioannina bus telematics and favorites application"
-   git push origin main
-   ```
-2. Import the repository in [vercel.com](https://vercel.com).
-3. Vercel automatically detects the Vite framework and executes the serverless functions in `/api/` with zero manual configuration.
