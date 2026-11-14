@@ -22,15 +22,9 @@
   }
 }
 
-/* Custom Leaflet Dark Theme Overrides */
+/* Custom Leaflet Map Styles */
 .leaflet-container {
-  background-color: #0b0f19 !important;
   font-family: inherit !important;
-}
-
-/* 100% Free OpenStreetMap Dark Theme (Zero Watermark, Zero API Key) */
-.dark-map-theme .leaflet-tile {
-  filter: brightness(0.65) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.75) !important;
 }
 
 .leaflet-popup-content-wrapper {

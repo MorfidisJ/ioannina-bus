@@ -72,6 +72,25 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     mapInstanceRef.current.setView([activeStop.lat, activeStop.lng], 16, { animate: true });
   }, [activeStop.code]);
 
+  // Synchronize Dark / Light mode directly on Leaflet's tilePane & container
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const tilePane = mapInstanceRef.current.getPane('tilePane');
+    const container = mapInstanceRef.current.getContainer();
+
+    if (tilePane) {
+      tilePane.style.filter = isMapDarkMode
+        ? 'brightness(0.65) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.75)'
+        : 'none';
+      tilePane.style.transition = 'filter 0.3s ease';
+    }
+
+    if (container) {
+      container.style.backgroundColor = isMapDarkMode ? '#0b0f19' : '#f1f5f9';
+      container.style.transition = 'background-color 0.3s ease';
+    }
+  }, [isMapDarkMode]);
+
   // Request user GPS location for map pin
   useEffect(() => {
     if (navigator.geolocation) {
@@ -293,11 +312,8 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     <div className={`relative transition-all duration-300 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-md ${
       isFullscreen ? 'fixed inset-3 z-50 rounded-2xl' : 'w-full h-72 sm:h-80 mb-4'
     }`}>
-      {/* Map Container with GPU-accelerated Dark Mode filter */}
-      <div
-        ref={mapContainerRef}
-        className={`w-full h-full ${isMapDarkMode ? 'dark-map-theme' : ''}`}
-      />
+      {/* Map Container */}
+      <div ref={mapContainerRef} className="w-full h-full" />
 
       {/* Map Top Floating Header */}
       <div className="absolute top-2.5 left-2.5 z-[1000] flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-700/80 shadow-md">
@@ -322,7 +338,11 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
 
         <button
           onClick={() => setIsMapDarkMode(d => !d)}
-          className="w-8 h-8 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 shadow-md flex items-center justify-center active:scale-95 transition-all"
+          className={`w-8 h-8 rounded-lg border shadow-md flex items-center justify-center active:scale-95 transition-all ${
+            isMapDarkMode
+              ? 'bg-slate-900/90 hover:bg-slate-800 text-amber-400 border-slate-700/80'
+              : 'bg-amber-400 text-slate-950 border-amber-300 hover:bg-amber-300 shadow-amber-500/20'
+          }`}
           title={isMapDarkMode ? (lang === 'el' ? 'Φωτεινός Χάρτης' : 'Light Map') : (lang === 'el' ? 'Σκοτεινός Χάρτης' : 'Dark Map')}
         >
           {isMapDarkMode ? <Sun size={15} /> : <Moon size={15} />}
