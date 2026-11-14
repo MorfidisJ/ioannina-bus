@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Bus, Search } from 'lucide-react';
-import { FavoriteStop, LiveVehicle } from './types';
+import { Bus, Search, Map } from 'lucide-react';
+import { FavoriteStop, LiveVehicle, ArrivalAlarm } from './types';
 import { ALL_STOPS, ALL_LINES, STOPS_MAP } from './data';
 import { fetchLiveArrivals } from './services/telematics';
+import { loadSavedAlarms, saveAlarms, sendArrivalNotification } from './services/alarmService';
 import { FavoriteStopsBar } from './components/FavoriteStopsBar';
 import { StopDetailsHeader } from './components/StopDetailsHeader';
 import { LiveArrivalsCard } from './components/LiveArrivalsCard';
 import { StopSearchModal } from './components/StopSearchModal';
 import { TimetableModal } from './components/TimetableModal';
+import { LiveTransitMap } from './components/LiveTransitMap';
+import { SetAlarmModal } from './components/SetAlarmModal';
+import { ActiveAlarmBanner } from './components/ActiveAlarmBanner';
 
 const FAVORITES_STORAGE_KEY = 'ioannina_bus_fav_stops_v1';
 const ACTIVE_STOP_STORAGE_KEY = 'ioannina_bus_active_stop_v1';
@@ -44,9 +48,15 @@ export function App() {
     return localStorage.getItem(ACTIVE_STOP_STORAGE_KEY) || '930';
   });
 
-  // Modals state
+  // Modals & Map state
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isTimetableOpen, setIsTimetableOpen] = useState(false);
+  const [isMapOpen, setIsMapOpen] = useState(false);
+
+  // Arrival Alarms state
+  const [alarms, setAlarms] = useState<ArrivalAlarm[]>(() => loadSavedAlarms());
+  const [selectedVehicleForAlarm, setSelectedVehicleForAlarm] = useState<LiveVehicle | null>(null);
+  const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
 
   // Live telematics state
   const [liveVehicles, setLiveVehicles] = useState<LiveVehicle[]>([]);
@@ -78,6 +88,10 @@ export function App() {
     localStorage.setItem(LANG_STORAGE_KEY, lang);
   }, [lang]);
 
+  useEffect(() => {
+    saveAlarms(alarms);
+  }, [alarms]);
+
   // Fetch live arrivals
   const loadLiveArrivals = async (isManual: boolean = false) => {
     if (isManual) setLoading(true);
@@ -106,6 +120,35 @@ export function App() {
     return () => clearInterval(interval);
   }, [activeStopCode, lang]);
 
+  // Alarm Watcher: Evaluate active alarms whenever live vehicles update
+  useEffect(() => {
+    if (liveVehicles.length === 0 || alarms.length === 0) return;
+
+    let updated = false;
+    const newAlarms = alarms.map(alarm => {
+      if (alarm.triggered) return alarm;
+      if (alarm.stopCode !== activeStopCode) return alarm;
+
+      const matchedVehicle = liveVehicles.find(v => {
+        if (alarm.vehicleCode && v.vehicleCode) {
+          return v.vehicleCode === alarm.vehicleCode;
+        }
+        return v.line === alarm.lineCode;
+      });
+
+      if (matchedVehicle && matchedVehicle.minutesUntil <= alarm.targetMinutes) {
+        sendArrivalNotification(alarm, matchedVehicle.minutesUntil, lang);
+        updated = true;
+        return { ...alarm, triggered: true };
+      }
+      return alarm;
+    });
+
+    if (updated) {
+      setAlarms(newAlarms);
+    }
+  }, [liveVehicles, activeStopCode, alarms, lang]);
+
   // Favorite handlers
   const handleToggleFavorite = (code: string) => {
     if (favoriteCodes.has(code)) {
@@ -132,8 +175,32 @@ export function App() {
     setFavorites(prev => prev.filter(f => f.code !== code));
   };
 
+  // Alarm handlers
+  const handleOpenAlarmForVehicle = (vehicle: LiveVehicle) => {
+    setSelectedVehicleForAlarm(vehicle);
+    setIsAlarmModalOpen(true);
+  };
+
+  const handleSaveAlarm = (newAlarm: ArrivalAlarm) => {
+    setAlarms(prev => [
+      ...prev.filter(a => !(a.stopCode === newAlarm.stopCode && a.lineCode === newAlarm.lineCode)),
+      newAlarm
+    ]);
+  };
+
+  const handleCancelAlarm = (alarmId: string) => {
+    setAlarms(prev => prev.filter(a => a.id !== alarmId));
+  };
+
+  const activeAlarmForSelectedVehicle = useMemo(() => {
+    if (!selectedVehicleForAlarm) return null;
+    return alarms.find(
+      a => !a.triggered && a.stopCode === activeStopCode && a.lineCode === selectedVehicleForAlarm.line
+    ) || null;
+  }, [selectedVehicleForAlarm, alarms, activeStopCode]);
+
   return (
-    <div className="bg-[#0b0f19] min-h-screen text-slate-100 flex flex-col font-sans selection:bg-sky-500/30 selection:text-white">
+    <div className="bg-[#0b0f19] min-h-screen text-slate-100 flex flex-col font-sans selection:bg-sky-500/30 selection:text-white pb-16">
       {/* App Header */}
       <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-lg mx-auto px-3.5 py-3 flex items-center justify-between gap-3">
@@ -155,6 +222,20 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-1.5">
+            {/* Map Toggle Button */}
+            <button
+              onClick={() => setIsMapOpen(m => !m)}
+              className={`p-2 rounded-lg border active:scale-95 transition-all flex items-center gap-1.5 text-xs font-medium ${
+                isMapOpen
+                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/50'
+                  : 'text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border-slate-800'
+              }`}
+              title={lang === 'el' ? 'Χάρτης' : 'Live Map'}
+            >
+              <Map size={14} />
+              <span className="hidden sm:inline">{lang === 'el' ? 'Χάρτης' : 'Map'}</span>
+            </button>
+
             {/* Search Button */}
             <button
               onClick={() => setIsSearchOpen(true)}
@@ -197,6 +278,20 @@ export function App() {
             isFavorite={favoriteCodes.has(activeStop.code)}
             onToggleFavorite={() => handleToggleFavorite(activeStop.code)}
             onOpenSearch={() => setIsSearchOpen(true)}
+            onToggleMap={() => setIsMapOpen(m => !m)}
+            isMapOpen={isMapOpen}
+            lang={lang}
+          />
+        )}
+
+        {/* Interactive Live Map (When toggled on) */}
+        {isMapOpen && activeStop && (
+          <LiveTransitMap
+            activeStop={activeStop}
+            allStops={ALL_STOPS}
+            vehicles={liveVehicles}
+            onSelectStop={setActiveStopCode}
+            onSetAlarmForVehicle={handleOpenAlarmForVehicle}
             lang={lang}
           />
         )}
@@ -212,10 +307,28 @@ export function App() {
             error={error}
             onRefresh={() => loadLiveArrivals(true)}
             onOpenTimetable={() => setIsTimetableOpen(true)}
+            onToggleMap={() => setIsMapOpen(m => !m)}
+            isMapOpen={isMapOpen}
+            onSetAlarm={handleOpenAlarmForVehicle}
+            activeAlarms={alarms}
             lang={lang}
           />
         )}
       </main>
+
+      {/* Active Alarm Bottom Pill Banner */}
+      <ActiveAlarmBanner
+        alarms={alarms}
+        vehicles={liveVehicles}
+        onCancelAlarm={handleCancelAlarm}
+        onOpenAlarmDetails={alarm => {
+          const matched = liveVehicles.find(v => v.line === alarm.lineCode);
+          if (matched) {
+            handleOpenAlarmForVehicle(matched);
+          }
+        }}
+        lang={lang}
+      />
 
       {/* Stop Search Modal */}
       <StopSearchModal
@@ -238,6 +351,23 @@ export function App() {
           isOpen={isTimetableOpen}
           onClose={() => setIsTimetableOpen(false)}
           stop={activeStop}
+          lang={lang}
+        />
+      )}
+
+      {/* Set Alarm Modal */}
+      {activeStop && (
+        <SetAlarmModal
+          isOpen={isAlarmModalOpen}
+          onClose={() => {
+            setIsAlarmModalOpen(false);
+            setSelectedVehicleForAlarm(null);
+          }}
+          stop={activeStop}
+          vehicle={selectedVehicleForAlarm}
+          activeAlarm={activeAlarmForSelectedVehicle}
+          onSaveAlarm={handleSaveAlarm}
+          onCancelAlarm={handleCancelAlarm}
           lang={lang}
         />
       )}

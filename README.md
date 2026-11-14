@@ -8,9 +8,9 @@ A high-performance, real-time transit tracker for **all 429 bus stops** and **al
 
 The native Android app is ready to install! Download the latest APK release directly:
 
-[![Download APK](https://img.shields.io/badge/Download_APK-v1.0.0-emerald?style=for-the-badge&logo=android)](https://github.com/MorfidisJ/ioannina-bus/releases/latest)
+[![Download APK](https://img.shields.io/badge/Download_APK-v1.1.0-emerald?style=for-the-badge&logo=android)](https://github.com/MorfidisJ/ioannina-bus/releases/latest)
 
-👉 **[Download ioannina-bus.apk from GitHub Releases (v1.0.0)](https://github.com/MorfidisJ/ioannina-bus/releases/download/v1.0.0/ioannina-bus.apk)**
+👉 **[Download ioannina-bus.apk from GitHub Releases (v1.1.0)](https://github.com/MorfidisJ/ioannina-bus/releases/download/v1.1.0/ioannina-bus.apk)**
 
 *Self-contained: Connects directly to the CityBus telematics service via native CapacitorHttp without requiring any local backend.*
 
@@ -18,6 +18,17 @@ The native Android app is ready to install! Download the latest APK release dire
 
 ## ✨ Features
 
+- 🗺️ **Interactive Live Map (Leaflet / Dark Mode)**:
+  - Real-time vehicle positions with authentic line badges on CartoDB Dark Matter map.
+  - Active stop marker with pulsating beacon and nearby stops within 800m.
+  - One-click auto-fit bounds for stop + incoming buses, and user GPS tracking.
+- 🔔 **Arrival Push Alarm & In-App Chime**:
+  - One-tap alarm setup (2, 5, or 8 minutes before arrival) on any approaching bus.
+  - Native Android Push Notifications via `@capacitor/local-notifications` + Web Notifications.
+  - Melodic transit chime generated via Web Audio API & device vibration patterns.
+  - Persistent floating status banner with quick-dismiss.
+- ⏱️ **Smooth Real-Time Seconds Ticker**:
+  - Accurate second-by-second countdown between 20-second API polling cycles.
 - 🌟 **Favorite Stops System**:
   - Save your most frequented stops (e.g. *Φιλοσοφική / Εστιατόριο #930*, *Δικαστικό Μέγαρο #400*, *Νοσοκομείο #451*, *Πλάτανος #201*).
   - Assign custom nicknames (e.g. "Σπίτι", "Σχολή", "Λέσχη", "Κέντρο").

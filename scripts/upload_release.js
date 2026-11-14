@@ -3,19 +3,26 @@ import fs from 'fs';
 import path from 'path';
 
 function getGitToken() {
-  const output = execSync('git credential fill', {
-    input: 'url=https://github.com\n',
-    encoding: 'utf-8'
-  });
-  const match = output.match(/password=(.+)/);
-  if (!match) throw new Error('Could not retrieve token from git credential manager');
-  return match[1].trim();
+  if (process.env.GITHUB_TOKEN) {
+    return process.env.GITHUB_TOKEN.trim();
+  }
+  try {
+    const output = execSync('git credential fill', {
+      input: 'url=https://github.com\n',
+      encoding: 'utf-8'
+    });
+    const match = output.match(/password=(.+)/);
+    if (match) return match[1].trim();
+  } catch {}
+
+  throw new Error('Could not retrieve token from git credential manager. Please set GITHUB_TOKEN environment variable.');
 }
 
 async function uploadRelease() {
   const token = getGitToken();
   const repo = 'MorfidisJ/ioannina-bus';
-  const tag = 'v1.0.0';
+  const pkg = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf-8'));
+  const tag = `v${pkg.version || '1.1.0'}`;
   const apkPath = path.resolve('ioannina-bus.apk');
 
   if (!fs.existsSync(apkPath)) {
@@ -51,17 +58,24 @@ async function uploadRelease() {
       body: JSON.stringify({
         tag_name: tag,
         target_commitish: 'main',
-        name: 'Ioannina Bus v1.0.0 - Android APK',
-        body: `## 🚌 Αστικό ΚΤΕΛ Ιωαννίνων - Android Native v1.0.0
+        name: `Ioannina Bus ${tag} - Android APK & Live Map`,
+        body: `## 🚌 Αστικό ΚΤΕΛ Ιωαννίνων - Android Native & Web ${tag}
 
-Επίσημη αυτόνομη έκδοση Android (APK) με υποστήριξη ζωντανής τηλεματικής και προγραμμάτων στάσεων.
+Ενημερωμένη έκδοση Android (APK) με υποστήριξη διαδραστικού live χάρτη, ειδοποιήσεων άφιξης και ζωντανής τηλεματικής.
 
-### ✨ Χαρακτηριστικά:
-- **Ζωντανές Αφίξεις (GPS)**: Παρακολούθηση λεωφορείων σε πραγματικό χρόνο για όλες τις 429 στάσεις.
-- **Αγαπημένες Στάσεις**: Αποθήκευση στάσεων (π.χ. *Φιλοσοφική / Λέσχη #930*, *Δικαστικό #400*, *Πανεπ. Νοσοκομείο #451*) με προσαρμοσμένα ονόματα.
-- **Πλήρες Πρόγραμμα Δρομολογίων**: Καθημερινές, Σάββατα και Κυριακές/Αργίες με αυτόματο εντοπισμό επόμενου δρομολογίου.
-- **Αυτόνομο στο Android**: Επικοινωνεί απευθείας με το σύστημα τηλεματικής του Αστικού ΚΤΕΛ μέσω Capacitor χωρίς να απαιτεί εξωτερικό backend.
-- **Εύρεση Κοντινών Στάσεων (GPS)**: Υπολογισμός απόστασης και εμφάνιση πλησιέστερων στάσεων.
+### ✨ Νέα Χαρακτηριστικά (v1.1.0):
+- 🗺️ **Διαδραστικός Live Χάρτης (Leaflet / Dark Mode)**:
+  - Εμφάνιση της επιλεγμένης στάσης και των κοντινών στάσεων (σε ακτίνα 800m).
+  - Ζωντανές θέσεις λεωφορείων με αυθεντικά badges γραμμών και εκτιμώμενο χρόνο άφιξης σε πραγματικό χρόνο.
+  - Αυτόματη εστίαση στη στάση ή σε όλα τα κινούμενα λεωφορεία.
+  - Εντοπισμός τοποθεσίας χρήστη μέσω GPS.
+- 🔔 **Σύστημα Ειδοποιήσεων Άφιξης (Arrival Push Alarms)**:
+  - Ορισμός ειδοποίησης (2', 5' ή 8' πριν την άφιξη) με ένα πάτημα στο εικονίδιο καμπάνας.
+  - Native Push Notifications στο Android μέσω \`@capacitor/local-notifications\`.
+  - Ηχητική ειδοποίηση (Transit Chime) μέσω Web Audio API & δόνηση συσκευής.
+  - Μόνιμο floating banner ενεργής ειδοποίησης με δυνατότητα άμεσης ακύρωσης.
+- ⏱️ **Ομαλή Αντίστροφη Μέτρηση Δευτερολέπτων**:
+  - Live ticker δευτερολέπτων ανάμεσα στα διαστήματα ανανέωσης των 20 δευτερολέπτων.
 
 ---
 ### 📲 Εγκατάσταση:
@@ -124,4 +138,3 @@ uploadRelease().catch(err => {
   console.error('\nUpload error:', err);
   process.exit(1);
 });
-

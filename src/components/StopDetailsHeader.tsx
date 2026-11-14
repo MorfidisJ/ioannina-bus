@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, MapPin, Navigation, Bus } from 'lucide-react';
+import { Star, MapPin, Navigation, Bus, Map } from 'lucide-react';
 import { BusStop } from '../types';
 
 interface StopDetailsHeaderProps {
@@ -7,6 +7,8 @@ interface StopDetailsHeaderProps {
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onOpenSearch: () => void;
+  onToggleMap?: () => void;
+  isMapOpen?: boolean;
   lang: 'el' | 'en';
 }
 
@@ -15,6 +17,8 @@ export const StopDetailsHeader: React.FC<StopDetailsHeaderProps> = ({
   isFavorite,
   onToggleFavorite,
   onOpenSearch,
+  onToggleMap,
+  isMapOpen,
   lang
 }) => {
   const googleMapsUrl = stop.lat && stop.lng
@@ -69,16 +73,30 @@ export const StopDetailsHeader: React.FC<StopDetailsHeaderProps> = ({
           <span className="truncate">{isFavorite ? (lang === 'el' ? 'Αγαπημένη' : 'Saved') : (lang === 'el' ? 'Αποθήκευση' : 'Favorite')}</span>
         </button>
 
-        {/* Google Maps Directions */}
-        <a
-          href={googleMapsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="h-11 px-2.5 rounded-xl text-xs font-semibold bg-slate-800/90 text-slate-300 border border-slate-700/80 hover:text-white flex items-center justify-center gap-1.5 transition-all active:scale-95"
-        >
-          <Navigation size={14} className="text-sky-400" />
-          <span>{lang === 'el' ? 'Χάρτης' : 'Map'}</span>
-        </a>
+        {/* Live Map or Google Maps Directions */}
+        {onToggleMap ? (
+          <button
+            onClick={onToggleMap}
+            className={`h-11 px-2.5 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
+              isMapOpen
+                ? 'bg-sky-500/20 text-sky-300 border-sky-500/50'
+                : 'bg-slate-800/90 text-slate-300 border-slate-700/80 hover:text-white'
+            }`}
+          >
+            <Map size={15} className="text-sky-400" />
+            <span className="truncate">{isMapOpen ? (lang === 'el' ? 'Κλείσιμο' : 'Close Map') : (lang === 'el' ? 'Live Χάρτης' : 'Live Map')}</span>
+          </button>
+        ) : (
+          <a
+            href={googleMapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-11 px-2.5 rounded-xl text-xs font-semibold bg-slate-800/90 text-slate-300 border border-slate-700/80 hover:text-white flex items-center justify-center gap-1.5 transition-all active:scale-95"
+          >
+            <Navigation size={14} className="text-sky-400" />
+            <span>{lang === 'el' ? 'Χάρτης' : 'Map'}</span>
+          </a>
+        )}
 
         {/* Change Stop Button */}
         <button

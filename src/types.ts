@@ -68,3 +68,15 @@ export interface FavoriteStop {
   order: number;
 }
 
+export interface ArrivalAlarm {
+  id: string;
+  stopCode: string;
+  stopName: string;
+  lineCode: string;
+  lineName: string;
+  vehicleCode?: string;
+  targetMinutes: number;
+  createdAt: number;
+  triggered: boolean;
+}
+
