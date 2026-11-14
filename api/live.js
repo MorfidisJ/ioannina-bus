@@ -24,19 +24,24 @@ export default async function handler(req, res) {
     const vehicles = Array.isArray(data?.vehicles) ? data.vehicles : [];
 
     const normalizedVehicles = vehicles.map(v => {
-      const departureMins = v.departureMins ?? 0;
-      const departureSeconds = v.departureSeconds ?? 0;
-      const mins = (departureMins === 0 && departureSeconds <= 30) ? 0 : departureMins + 1;
+      const departureMins = parseInt(v.departureMins, 10) || 0;
+      const departureSeconds = parseInt(v.departureSeconds, 10) || 0;
+      const totalSeconds = departureMins * 60 + departureSeconds;
+      const mins = totalSeconds <= 30 ? 0 : Math.ceil(totalSeconds / 60);
+
+      const lat = parseFloat(v.latitude);
+      const lng = parseFloat(v.longitude);
+      const isValidGps = !isNaN(lat) && !isNaN(lng) && lat > 39.0 && lat < 40.5 && lng > 20.0 && lng < 21.5;
 
       return {
         line: v.lineCode || '',
         lineName: v.lineName || '',
         routeName: v.routeName || '',
         minutesUntil: mins,
-        departureSeconds,
+        departureSeconds: totalSeconds,
         vehicleCode: v.vehicleCode || '',
-        latitude: v.latitude,
-        longitude: v.longitude
+        latitude: isValidGps ? lat : undefined,
+        longitude: isValidGps ? lng : undefined
       };
     });
 

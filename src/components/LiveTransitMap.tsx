@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { Bus, MapPin, Navigation, Crosshair, Maximize2, Minimize2, Bell } from 'lucide-react';
+import { Bus, MapPin, Navigation, Crosshair, Maximize2, Minimize2, Bell, Sun, Moon } from 'lucide-react';
 import { BusStop, LiveVehicle } from '../types';
 import { calculateDistanceMeters } from '../services/telematics';
 
@@ -25,6 +25,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMapDarkMode, setIsMapDarkMode] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   // Initialize Map
@@ -40,10 +41,10 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         attributionControl: false
       });
 
-      // CartoDB Dark Matter tile layer
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      // 100% Free OpenStreetMap tile layer - No API key, No watermark
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        subdomains: 'abcd'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" style="color: #64748b">OpenStreetMap</a>'
       }).addTo(map);
 
       // Attribution control in bottom right
@@ -187,8 +188,13 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
       `)
       .addTo(layer);
 
-    // 4. Render Live Arriving Buses (with Line Badge & Live ETA)
-    const validVehicles = vehicles.filter(v => v.latitude && v.longitude && v.latitude !== 0 && v.longitude !== 0);
+    // 4. Render Live Arriving Buses (only if they have valid GPS coordinates in Ioannina)
+    const validVehicles = vehicles.filter(v => {
+      const lat = typeof v.latitude === 'string' ? parseFloat(v.latitude) : v.latitude;
+      const lng = typeof v.longitude === 'string' ? parseFloat(v.longitude) : v.longitude;
+      return typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng) &&
+        lat > 39.0 && lat < 40.5 && lng > 20.0 && lng < 21.5;
+    });
 
     validVehicles.forEach((v, idx) => {
       const isUrgent = v.minutesUntil <= 2;
@@ -247,10 +253,17 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     mapInstanceRef.current.setView([activeStop.lat, activeStop.lng], 16, { animate: true });
   };
 
+  const isValidVehicleGps = (v: LiveVehicle) => {
+    const lat = typeof v.latitude === 'string' ? parseFloat(v.latitude) : v.latitude;
+    const lng = typeof v.longitude === 'string' ? parseFloat(v.longitude) : v.longitude;
+    return typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng) &&
+      lat > 39.0 && lat < 40.5 && lng > 20.0 && lng < 21.5;
+  };
+
   const handleFitBuses = () => {
     const map = mapInstanceRef.current;
     if (!map) return;
-    const validVehicles = vehicles.filter(v => v.latitude && v.longitude && v.latitude !== 0);
+    const validVehicles = vehicles.filter(isValidVehicleGps);
     if (validVehicles.length === 0) {
       handleRecenterStop();
       return;
@@ -260,7 +273,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
       [activeStop.lat, activeStop.lng],
       ...validVehicles.map(v => [v.latitude!, v.longitude!] as [number, number])
     ]);
-    map.fitBounds(bounds, { padding: [50, 50], animate: true });
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17, animate: true });
   };
 
   const handleRecenterUser = () => {
@@ -280,8 +293,11 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     <div className={`relative transition-all duration-300 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-md ${
       isFullscreen ? 'fixed inset-3 z-50 rounded-2xl' : 'w-full h-72 sm:h-80 mb-4'
     }`}>
-      {/* Map Container */}
-      <div ref={mapContainerRef} className="w-full h-full" />
+      {/* Map Container with GPU-accelerated Dark Mode filter */}
+      <div
+        ref={mapContainerRef}
+        className={`w-full h-full ${isMapDarkMode ? 'dark-map-theme' : ''}`}
+      />
 
       {/* Map Top Floating Header */}
       <div className="absolute top-2.5 left-2.5 z-[1000] flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-700/80 shadow-md">
@@ -305,6 +321,14 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         </button>
 
         <button
+          onClick={() => setIsMapDarkMode(d => !d)}
+          className="w-8 h-8 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 shadow-md flex items-center justify-center active:scale-95 transition-all"
+          title={isMapDarkMode ? (lang === 'el' ? 'Φωτεινός Χάρτης' : 'Light Map') : (lang === 'el' ? 'Σκοτεινός Χάρτης' : 'Dark Map')}
+        >
+          {isMapDarkMode ? <Sun size={15} /> : <Moon size={15} />}
+        </button>
+
+        <button
           onClick={handleRecenterStop}
           className="w-8 h-8 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 shadow-md flex items-center justify-center active:scale-95 transition-all"
           title={lang === 'el' ? 'Εστίαση στη στάση' : 'Center on stop'}
@@ -312,7 +336,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
           <Crosshair size={15} />
         </button>
 
-        {vehicles.some(v => v.latitude && v.longitude) && (
+        {vehicles.some(isValidVehicleGps) && (
           <button
             onClick={handleFitBuses}
             className="w-8 h-8 rounded-lg bg-sky-950/90 hover:bg-sky-900 text-sky-300 hover:text-white border border-sky-700/80 shadow-md flex items-center justify-center active:scale-95 transition-all animate-bounce"
@@ -337,10 +361,10 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
       <div className="absolute bottom-2 left-2.5 z-[1000] flex items-center gap-2">
         <span className="text-[11px] bg-slate-900/90 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-800 text-slate-300 font-medium shadow-sm flex items-center gap-1.5">
           <Bus size={12} className="text-sky-400" />
-          {vehicles.filter(v => v.latitude && v.longitude).length > 0
+          {vehicles.filter(isValidVehicleGps).length > 0
             ? (lang === 'el'
-                ? `${vehicles.filter(v => v.latitude && v.longitude).length} ενεργά λεωφορεία στον χάρτη`
-                : `${vehicles.filter(v => v.latitude && v.longitude).length} live buses on map`)
+                ? `${vehicles.filter(isValidVehicleGps).length} ενεργά λεωφορεία στον χάρτη`
+                : `${vehicles.filter(isValidVehicleGps).length} live buses on map`)
             : (lang === 'el' ? 'Αναμονή GPS οχημάτων' : 'Awaiting vehicle GPS')}
         </span>
       </div>

@@ -41,7 +41,10 @@ export const LiveArrivalsCard: React.FC<LiveArrivalsCardProps> = ({
     const initialMap: Record<string, number> = {};
     vehicles.forEach((v, idx) => {
       const key = `${v.line}-${v.vehicleCode || idx}`;
-      const totalSecs = v.departureSeconds > 0 ? v.departureSeconds : v.minutesUntil * 60;
+      let totalSecs = v.departureSeconds;
+      if (!totalSecs || (totalSecs < v.minutesUntil * 50 && v.minutesUntil > 1)) {
+        totalSecs = v.minutesUntil * 60;
+      }
       initialMap[key] = Math.max(0, totalSecs);
     });
     setSecondsRemaining(initialMap);
@@ -185,7 +188,7 @@ export const LiveArrivalsCard: React.FC<LiveArrivalsCardProps> = ({
                     )}
 
                     <div className="text-right">
-                      {remainingSecs <= 30 ? (
+                      {remainingSecs <= 30 && v.minutesUntil <= 1 ? (
                         <div className="text-xs sm:text-sm font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2.5 py-1 rounded-lg animate-pulse">
                           {lang === 'el' ? 'Τώρα' : 'Now'}
                         </div>

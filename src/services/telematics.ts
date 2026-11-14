@@ -62,17 +62,24 @@ export async function fetchLiveArrivals(stopCode: string, lang: 'el' | 'en' = 'e
       const data = await nativeCityBusGet(`stops/live/${stopCode}`, lang);
       const rawVehicles = Array.isArray(data?.vehicles) ? data.vehicles : [];
       const vehicles: LiveVehicle[] = rawVehicles.map((v: any) => {
-        const mins = v.departureMins ?? 0;
-        const secs = v.departureSeconds ?? 0;
+        const depMins = parseInt(v.departureMins, 10) || 0;
+        const depSecs = parseInt(v.departureSeconds, 10) || 0;
+        const totalSeconds = depMins * 60 + depSecs;
+        const minutesUntil = totalSeconds <= 30 ? 0 : Math.ceil(totalSeconds / 60);
+
+        const lat = parseFloat(v.latitude);
+        const lng = parseFloat(v.longitude);
+        const isValidGps = !isNaN(lat) && !isNaN(lng) && lat > 39.0 && lat < 40.5 && lng > 20.0 && lng < 21.5;
+
         return {
           line: String(v.lineCode || ''),
           lineName: v.lineName || '',
           routeName: v.routeName || '',
-          minutesUntil: (mins === 0 && secs <= 30) ? 0 : mins + 1,
-          departureSeconds: secs,
+          minutesUntil,
+          departureSeconds: totalSeconds,
           vehicleCode: String(v.vehicleCode || ''),
-          latitude: v.latitude,
-          longitude: v.longitude
+          latitude: isValidGps ? lat : undefined,
+          longitude: isValidGps ? lng : undefined
         };
       });
       return {
@@ -89,10 +96,34 @@ export async function fetchLiveArrivals(stopCode: string, lang: 'el' | 'en' = 'e
   const res = await fetch(`/api/live?stopCode=${encodeURIComponent(stopCode)}&lang=${lang}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
+  const rawList = Array.isArray(data.vehicles) ? data.vehicles : [];
+  const normalizedVehicles: LiveVehicle[] = rawList.map((v: any) => {
+    const depMins = parseInt(v.departureMins ?? v.minutesUntil, 10) || 0;
+    const depSecs = parseInt(v.departureSeconds, 10) || 0;
+    // If departureSeconds is already total seconds (> 60), use it directly, else calculate total
+    const totalSeconds = depSecs > 60 ? depSecs : (depMins * 60 + depSecs);
+    const minutesUntil = totalSeconds <= 30 ? 0 : Math.ceil(totalSeconds / 60);
+
+    const lat = typeof v.latitude === 'string' ? parseFloat(v.latitude) : v.latitude;
+    const lng = typeof v.longitude === 'string' ? parseFloat(v.longitude) : v.longitude;
+    const isValidGps = typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng) &&
+      lat > 39.0 && lat < 40.5 && lng > 20.0 && lng < 21.5;
+
+    return {
+      line: String(v.line || v.lineCode || ''),
+      lineName: v.lineName || '',
+      routeName: v.routeName || '',
+      minutesUntil,
+      departureSeconds: totalSeconds,
+      vehicleCode: String(v.vehicleCode || ''),
+      latitude: isValidGps ? lat : undefined,
+      longitude: isValidGps ? lng : undefined
+    };
+  });
 
   return {
-    isLive: Boolean(data.isLive && Array.isArray(data.vehicles) && data.vehicles.length > 0),
-    vehicles: Array.isArray(data.vehicles) ? data.vehicles : [],
+    isLive: Boolean(data.isLive && normalizedVehicles.length > 0),
+    vehicles: normalizedVehicles,
     stopCode: data.stopCode || stopCode
   };
 }
