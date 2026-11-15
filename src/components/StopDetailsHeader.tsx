@@ -1,6 +1,7 @@
-import React from 'react';
-import { Star, MapPin, Navigation, Bus, Map } from 'lucide-react';
+import React, { useState } from 'react';
+import { Star, MapPin, Navigation, Bus, Map, Smartphone, Check } from 'lucide-react';
 import { BusStop } from '../types';
+import { syncActiveStopToWidget } from '../services/widgetBridge';
 
 interface StopDetailsHeaderProps {
   stop: BusStop;
@@ -21,6 +22,15 @@ export const StopDetailsHeader: React.FC<StopDetailsHeaderProps> = ({
   isMapOpen,
   lang
 }) => {
+  const [isWidgetSynced, setIsWidgetSynced] = useState(false);
+
+  const handleSetWidget = async () => {
+    const name = lang === 'el' ? stop.name_el : stop.name_en;
+    await syncActiveStopToWidget(stop.code, `${name} (#${stop.code})`);
+    setIsWidgetSynced(true);
+    setTimeout(() => setIsWidgetSynced(false), 2500);
+  };
+
   const googleMapsUrl = stop.lat && stop.lng
     ? `https://www.google.com/maps/dir/?api=1&destination=${stop.lat},${stop.lng}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stop.name_el + ' Ιωάννινα')}`;
@@ -33,9 +43,34 @@ export const StopDetailsHeader: React.FC<StopDetailsHeaderProps> = ({
           <Bus size={14} className="text-sky-400" />
           <span>{lang === 'el' ? 'Επιλεγμένη Στάση' : 'Selected Stop'}</span>
         </div>
-        <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/60">
-          ID: {stop.code}
-        </span>
+        <div className="flex items-center gap-2">
+          {/* Set as Home Screen Widget Button */}
+          <button
+            onClick={handleSetWidget}
+            className={`text-[11px] px-2 py-0.5 rounded-md border flex items-center gap-1 transition-all active:scale-95 ${
+              isWidgetSynced
+                ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/50'
+                : 'bg-slate-800/80 text-slate-400 hover:text-sky-300 border-slate-700/60'
+            }`}
+            title={lang === 'el' ? 'Ορισμός στο Android Widget αρχικής οθόνης' : 'Set as Android Home Screen Widget'}
+          >
+            {isWidgetSynced ? (
+              <>
+                <Check size={11} className="text-emerald-400" />
+                <span>{lang === 'el' ? 'Στο Widget!' : 'In Widget!'}</span>
+              </>
+            ) : (
+              <>
+                <Smartphone size={11} />
+                <span>Widget</span>
+              </>
+            )}
+          </button>
+
+          <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/60">
+            ID: {stop.code}
+          </span>
+        </div>
       </div>
 
       {/* Stop Name */}

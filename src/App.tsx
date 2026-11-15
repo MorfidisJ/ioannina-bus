@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Bus, Search, Map } from 'lucide-react';
-import { FavoriteStop, LiveVehicle, ArrivalAlarm } from './types';
+import { Bus, Search, Map, Compass } from 'lucide-react';
+import { FavoriteStop, LiveVehicle, ArrivalAlarm, CustomLocationPoint, RoutePlanOption, ActiveRoutePlan } from './types';
 import { ALL_STOPS, ALL_LINES, STOPS_MAP } from './data';
 import { fetchLiveArrivals } from './services/telematics';
 import { loadSavedAlarms, saveAlarms, sendArrivalNotification } from './services/alarmService';
@@ -12,6 +12,8 @@ import { TimetableModal } from './components/TimetableModal';
 import { LiveTransitMap } from './components/LiveTransitMap';
 import { SetAlarmModal } from './components/SetAlarmModal';
 import { ActiveAlarmBanner } from './components/ActiveAlarmBanner';
+import { RoutePlannerModal } from './components/RoutePlannerModal';
+import { syncActiveStopToWidget } from './services/widgetBridge';
 
 const FAVORITES_STORAGE_KEY = 'ioannina_bus_fav_stops_v1';
 const ACTIVE_STOP_STORAGE_KEY = 'ioannina_bus_active_stop_v1';
@@ -53,6 +55,13 @@ export function App() {
   const [isTimetableOpen, setIsTimetableOpen] = useState(false);
   const [isMapOpen, setIsMapOpen] = useState(false);
 
+  // Route Planner & Custom Pin state
+  const [isRoutePlannerOpen, setIsRoutePlannerOpen] = useState(false);
+  const [activeRoutePlan, setActiveRoutePlan] = useState<ActiveRoutePlan | null>(null);
+  const [isPickingLocation, setIsPickingLocation] = useState(false);
+  const [pickLocationTarget, setPickLocationTarget] = useState<'origin' | 'destination' | null>(null);
+  const [pickedLocation, setPickedLocation] = useState<{ target: 'origin' | 'destination'; lat: number; lng: number } | null>(null);
+
   // Arrival Alarms state
   const [alarms, setAlarms] = useState<ArrivalAlarm[]>(() => loadSavedAlarms());
   const [selectedVehicleForAlarm, setSelectedVehicleForAlarm] = useState<LiveVehicle | null>(null);
@@ -82,7 +91,11 @@ export function App() {
 
   useEffect(() => {
     localStorage.setItem(ACTIVE_STOP_STORAGE_KEY, activeStopCode);
-  }, [activeStopCode]);
+    if (activeStop) {
+      const name = lang === 'el' ? activeStop.name_el : activeStop.name_en;
+      syncActiveStopToWidget(activeStop.code, `${name} (#${activeStop.code})`);
+    }
+  }, [activeStopCode, activeStop, lang]);
 
   useEffect(() => {
     localStorage.setItem(LANG_STORAGE_KEY, lang);
@@ -192,6 +205,28 @@ export function App() {
     setAlarms(prev => prev.filter(a => a.id !== alarmId));
   };
 
+  // Route Planner handlers
+  const handleRequestPickOnMap = (target: 'origin' | 'destination') => {
+    setPickLocationTarget(target);
+    setIsPickingLocation(true);
+    setIsMapOpen(true);
+  };
+
+  const handleLocationPicked = (lat: number, lng: number) => {
+    if (pickLocationTarget) {
+      setPickedLocation({ target: pickLocationTarget, lat, lng });
+    }
+    setIsPickingLocation(false);
+    setPickLocationTarget(null);
+    setIsRoutePlannerOpen(true);
+  };
+
+  const handleSelectRoutePlan = (origin: CustomLocationPoint, destination: CustomLocationPoint, option: RoutePlanOption) => {
+    setActiveRoutePlan({ origin, destination, selectedOption: option });
+    setActiveStopCode(option.boardingStop.code);
+    setIsMapOpen(true);
+  };
+
   const activeAlarmForSelectedVehicle = useMemo(() => {
     if (!selectedVehicleForAlarm) return null;
     return alarms.find(
@@ -222,6 +257,16 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-1.5">
+            {/* Route Planner Button */}
+            <button
+              onClick={() => setIsRoutePlannerOpen(true)}
+              className="p-2 rounded-lg text-sky-400 hover:text-white bg-sky-950/40 hover:bg-sky-900/60 border border-sky-800/60 active:scale-95 transition-all flex items-center gap-1.5 text-xs font-semibold"
+              title={lang === 'el' ? 'Σχεδιαστής Διαδρομής' : 'Trip Planner'}
+            >
+              <Compass size={14} />
+              <span className="hidden sm:inline">{lang === 'el' ? 'Πώς πάω;' : 'Trip Plan'}</span>
+            </button>
+
             {/* Map Toggle Button */}
             <button
               onClick={() => setIsMapOpen(m => !m)}
@@ -293,6 +338,15 @@ export function App() {
             onSelectStop={setActiveStopCode}
             onSetAlarmForVehicle={handleOpenAlarmForVehicle}
             lang={lang}
+            isPickingLocation={isPickingLocation}
+            onLocationPicked={handleLocationPicked}
+            onCancelPickLocation={() => {
+              setIsPickingLocation(false);
+              setPickLocationTarget(null);
+              setIsRoutePlannerOpen(true);
+            }}
+            activeRoutePlan={activeRoutePlan}
+            onClearRoutePlan={() => setActiveRoutePlan(null)}
           />
         )}
 
@@ -327,6 +381,18 @@ export function App() {
             handleOpenAlarmForVehicle(matched);
           }
         }}
+        lang={lang}
+      />
+
+      {/* Route Planner Modal */}
+      <RoutePlannerModal
+        isOpen={isRoutePlannerOpen}
+        onClose={() => setIsRoutePlannerOpen(false)}
+        allStops={ALL_STOPS}
+        activeStop={activeStop}
+        onSelectRoutePlan={handleSelectRoutePlan}
+        onRequestPickOnMap={handleRequestPickOnMap}
+        pickedLocation={pickedLocation}
         lang={lang}
       />
 

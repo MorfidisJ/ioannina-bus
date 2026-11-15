@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { Bus, MapPin, Navigation, Crosshair, Maximize2, Minimize2, Bell, Sun, Moon } from 'lucide-react';
-import { BusStop, LiveVehicle } from '../types';
+import { Bus, MapPin, Navigation, Crosshair, Maximize2, Minimize2, Bell, Sun, Moon, Flag, X, Route } from 'lucide-react';
+import { BusStop, LiveVehicle, ActiveRoutePlan } from '../types';
 import { calculateDistanceMeters } from '../services/telematics';
 
 interface LiveTransitMapProps {
@@ -11,6 +11,11 @@ interface LiveTransitMapProps {
   onSelectStop: (code: string) => void;
   onSetAlarmForVehicle?: (vehicle: LiveVehicle) => void;
   lang: 'el' | 'en';
+  isPickingLocation?: boolean;
+  onLocationPicked?: (lat: number, lng: number) => void;
+  onCancelPickLocation?: () => void;
+  activeRoutePlan?: ActiveRoutePlan | null;
+  onClearRoutePlan?: () => void;
 }
 
 export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
@@ -19,7 +24,12 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
   vehicles,
   onSelectStop,
   onSetAlarmForVehicle,
-  lang
+  lang,
+  isPickingLocation = false,
+  onLocationPicked,
+  onCancelPickLocation,
+  activeRoutePlan,
+  onClearRoutePlan
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -66,11 +76,31 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     };
   }, []);
 
-  // Center map on active stop change
+  // Center map on active stop change (only if not viewing active route plan)
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    if (!mapInstanceRef.current || activeRoutePlan) return;
     mapInstanceRef.current.setView([activeStop.lat, activeStop.lng], 16, { animate: true });
-  }, [activeStop.code]);
+  }, [activeStop.code, activeRoutePlan]);
+
+  // Handle Map Click for Location Picking
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (isPickingLocation) {
+      map.getContainer().style.cursor = 'crosshair';
+      const handleClick = (e: L.LeafletMouseEvent) => {
+        onLocationPicked?.(e.latlng.lat, e.latlng.lng);
+      };
+      map.on('click', handleClick);
+      return () => {
+        map.getContainer().style.cursor = '';
+        map.off('click', handleClick);
+      };
+    } else {
+      map.getContainer().style.cursor = '';
+    }
+  }, [isPickingLocation, onLocationPicked]);
 
   // Synchronize Dark / Light mode directly on Leaflet's tilePane & container
   useEffect(() => {
@@ -111,6 +141,97 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     if (!map || !layer) return;
 
     layer.clearLayers();
+
+    // 0. Render Active Route Plan (if present)
+    if (activeRoutePlan) {
+      const { origin, destination, selectedOption } = activeRoutePlan;
+      const bStop = selectedOption.boardingStop;
+      const aStop = selectedOption.alightingStop;
+
+      // Origin Pin (Blue)
+      const originIcon = L.divIcon({
+        className: 'route-origin-marker',
+        html: `
+          <div class="relative flex items-center justify-center w-8 h-8">
+            <span class="animate-ping absolute inline-flex h-7 w-7 rounded-full bg-sky-400 opacity-50"></span>
+            <div class="w-7 h-7 rounded-full bg-sky-600 border-2 border-white shadow-xl flex items-center justify-center text-white font-bold text-xs">
+              A
+            </div>
+          </div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+
+      L.marker([origin.lat, origin.lng], { icon: originIcon, zIndexOffset: 1200 })
+        .bindPopup(`
+          <div class="text-xs font-sans text-slate-100 py-1">
+            <span class="text-[10px] font-bold text-sky-400 uppercase tracking-wide">Αφετηρία</span>
+            <p class="font-bold text-white mt-0.5">${origin.name}</p>
+          </div>
+        `)
+        .addTo(layer);
+
+      // Walking line from Origin to Boarding Stop (dashed sky blue)
+      if (calculateDistanceMeters(origin.lat, origin.lng, bStop.lat, bStop.lng) > 15) {
+        L.polyline([[origin.lat, origin.lng], [bStop.lat, bStop.lng]], {
+          color: '#38bdf8',
+          weight: 4,
+          dashArray: '6, 8',
+          opacity: 0.95
+        }).addTo(layer);
+      }
+
+      // Bus ride line between Boarding Stop and Alighting Stop (solid line)
+      L.polyline([[bStop.lat, bStop.lng], [aStop.lat, aStop.lng]], {
+        color: selectedOption.lineColor || '#2563eb',
+        weight: 6,
+        opacity: 0.85
+      }).addTo(layer);
+
+      // Walking line from Alighting Stop to Destination (dashed emerald green)
+      if (calculateDistanceMeters(aStop.lat, aStop.lng, destination.lat, destination.lng) > 15) {
+        L.polyline([[aStop.lat, aStop.lng], [destination.lat, destination.lng]], {
+          color: '#10b981',
+          weight: 4,
+          dashArray: '6, 8',
+          opacity: 0.95
+        }).addTo(layer);
+      }
+
+      // Destination Pin (Rose/Red)
+      const destIcon = L.divIcon({
+        className: 'route-dest-marker',
+        html: `
+          <div class="relative flex items-center justify-center w-8 h-8">
+            <span class="animate-ping absolute inline-flex h-7 w-7 rounded-full bg-rose-400 opacity-50"></span>
+            <div class="w-7 h-7 rounded-full bg-rose-600 border-2 border-white shadow-xl flex items-center justify-center text-white font-bold text-xs">
+              B
+            </div>
+          </div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+
+      L.marker([destination.lat, destination.lng], { icon: destIcon, zIndexOffset: 1200 })
+        .bindPopup(`
+          <div class="text-xs font-sans text-slate-100 py-1">
+            <span class="text-[10px] font-bold text-rose-400 uppercase tracking-wide">Προορισμός</span>
+            <p class="font-bold text-white mt-0.5">${destination.name}</p>
+          </div>
+        `)
+        .addTo(layer);
+
+      // Fit bounds to entire trip
+      const routeBounds = L.latLngBounds([
+        [origin.lat, origin.lng],
+        [bStop.lat, bStop.lng],
+        [aStop.lat, aStop.lng],
+        [destination.lat, destination.lng]
+      ]);
+      map.fitBounds(routeBounds, { padding: [50, 50], maxZoom: 16, animate: true });
+    }
 
     // 1. Render User Location (if available)
     if (userLocation) {
@@ -264,7 +385,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         }
       });
     });
-  }, [activeStop, allStops, vehicles, userLocation, lang, onSelectStop, onSetAlarmForVehicle]);
+  }, [activeStop, allStops, vehicles, userLocation, lang, onSelectStop, onSetAlarmForVehicle, activeRoutePlan]);
 
   // Recenter actions
   const handleRecenterStop = () => {
@@ -388,6 +509,62 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
             : (lang === 'el' ? 'Αναμονή GPS οχημάτων' : 'Awaiting vehicle GPS')}
         </span>
       </div>
+
+      {/* Picking Location Floating Bar */}
+      {isPickingLocation && (
+        <div className="absolute top-3 inset-x-3 z-[1100] bg-sky-950/95 backdrop-blur-md border-2 border-sky-400 text-white px-3.5 py-2.5 rounded-xl shadow-2xl flex items-center justify-between animate-pulse">
+          <div className="flex items-center gap-2">
+            <MapPin size={18} className="text-sky-400 animate-bounce" />
+            <span className="text-xs font-bold text-sky-100">
+              {lang === 'el' ? 'Πατήστε στον χάρτη για να επιλέξετε σημείο' : 'Tap anywhere on the map to set location'}
+            </span>
+          </div>
+          {onCancelPickLocation && (
+            <button
+              onClick={onCancelPickLocation}
+              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md text-xs font-semibold transition-colors"
+            >
+              {lang === 'el' ? 'Ακύρωση' : 'Cancel'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Active Route Plan Bottom Pill */}
+      {activeRoutePlan && (
+        <div className="absolute bottom-11 inset-x-3 z-[1100] bg-slate-900/95 backdrop-blur-md border border-slate-700 text-white p-2.5 rounded-xl shadow-2xl flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shadow-md shrink-0"
+              style={{
+                backgroundColor: activeRoutePlan.selectedOption.lineColor || '#2563eb',
+                color: activeRoutePlan.selectedOption.lineTextColor || '#ffffff'
+              }}
+            >
+              {activeRoutePlan.selectedOption.lineCode}
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-slate-100 truncate">
+                {activeRoutePlan.selectedOption.lineName}
+              </div>
+              <div className="text-[10px] text-slate-400 truncate">
+                {activeRoutePlan.selectedOption.liveMinutesUntil !== null && activeRoutePlan.selectedOption.liveMinutesUntil !== undefined
+                  ? `⏱️ Σε ${activeRoutePlan.selectedOption.liveMinutesUntil}' • ~${activeRoutePlan.selectedOption.totalMinutes}' συνολικός χρόνος`
+                  : `~${activeRoutePlan.selectedOption.totalMinutes}' εκτιμώμενος χρόνος`}
+              </div>
+            </div>
+          </div>
+          {onClearRoutePlan && (
+            <button
+              onClick={onClearRoutePlan}
+              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg transition-colors shrink-0"
+              title={lang === 'el' ? 'Κλείσιμο διαδρομής' : 'Close route'}
+            >
+              <X size={15} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

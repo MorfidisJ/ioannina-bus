@@ -34,6 +34,19 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
+
+        <!-- Android Home Screen AppWidget Receiver -->
+        <receiver
+            android:name=".BusArrivalWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="gr.uoi.ioanninabus.ACTION_WIDGET_REFRESH" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/bus_arrival_widget_info" />
+        </receiver>
     </application>
 
     <!-- Permissions -->

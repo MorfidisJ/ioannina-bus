@@ -80,3 +80,45 @@ export interface ArrivalAlarm {
   triggered: boolean;
 }
 
+export interface CustomLocationPoint {
+  name: string;
+  lat: number;
+  lng: number;
+  type: 'gps' | 'stop' | 'map_pin' | 'address' | 'saved_place';
+  stopCode?: string;
+}
+
+export interface SavedPlace {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  icon?: string;
+  createdAt: number;
+}
+
+export interface RoutePlanOption {
+  id: string;
+  lineCode: string;
+  lineName: string;
+  lineColor: string;
+  lineTextColor: string;
+  boardingStop: BusStop;
+  alightingStop: BusStop;
+  walkToBoardingMeters: number;
+  walkToBoardingMinutes: number;
+  walkFromAlightingMeters: number;
+  walkFromAlightingMinutes: number;
+  estimatedRideMinutes: number;
+  totalMinutes: number;
+  liveMinutesUntil?: number | null;
+  stopsCount: number;
+}
+
+export interface ActiveRoutePlan {
+  origin: CustomLocationPoint;
+  destination: CustomLocationPoint;
+  selectedOption: RoutePlanOption;
+}
+
+

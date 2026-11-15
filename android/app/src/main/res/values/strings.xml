@@ -4,4 +4,6 @@
     <string name="title_activity_main">Ioannina Bus</string>
     <string name="package_name">gr.uoi.ioanninabus</string>
     <string name="custom_url_scheme">gr.uoi.ioanninabus</string>
+    <string name="widget_name">Ioannina Bus Live</string>
+    <string name="widget_description">Live αφίξεις λεωφορείων για την αγαπημένη σας στάση στα Γιάννενα</string>
 </resources>
