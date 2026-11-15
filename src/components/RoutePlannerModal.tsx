@@ -630,8 +630,8 @@ export const RoutePlannerModal: React.FC<RoutePlannerModalProps> = ({
                     <span className="truncate">
                       {opt.walkToBoardingMinutes > 0
                         ? (lang === 'el'
-                            ? `Περπάτημα ${opt.walkToBoardingMinutes}' (${opt.walkToBoardingMeters}m) στη Στάση`
-                            : `Walk ${opt.walkToBoardingMinutes}' (${opt.walkToBoardingMeters}m) to`)
+                          ? `Περπάτημα ${opt.walkToBoardingMinutes}' (${opt.walkToBoardingMeters}m) στη Στάση`
+                          : `Walk ${opt.walkToBoardingMinutes}' (${opt.walkToBoardingMeters}m) to`)
                         : (lang === 'el' ? 'Επιβίβαση στη Στάση' : 'Board at')}
                       {' '}
                       <strong className="text-white">{lang === 'el' ? opt.boardingStop.name_el : opt.boardingStop.name_en}</strong>
