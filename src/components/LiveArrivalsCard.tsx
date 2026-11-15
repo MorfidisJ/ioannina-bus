@@ -166,6 +166,25 @@ export const LiveArrivalsCard: React.FC<LiveArrivalsCardProps> = ({
                       <div className="text-[11px] text-slate-400 truncate mt-0.5">
                         {lang === 'el' ? 'Προς τη στάση' : 'Approaching stop'}
                       </div>
+                      {v.traffic && v.traffic.isCongested && (
+                        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                          <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 ${
+                            v.traffic.congestionLevel === 'heavy'
+                              ? 'bg-rose-950/80 text-rose-300 border border-rose-800/60'
+                              : 'bg-amber-950/80 text-amber-300 border border-amber-800/60'
+                          }`}>
+                            <span>⚠️</span>
+                            <span>
+                              {lang === 'el'
+                                ? `Κίνηση ${v.traffic.corridorName ? 'στη ' + v.traffic.corridorName : ''} (+${v.traffic.estimatedDelayMinutes}')`
+                                : `Traffic ${v.traffic.corridorName ? 'at ' + v.traffic.corridorName : ''} (+${v.traffic.estimatedDelayMinutes}')`}
+                            </span>
+                            <span className="text-[9px] opacity-75 font-mono">
+                              • {v.traffic.speedKmh} km/h
+                            </span>
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 

@@ -8,9 +8,9 @@ A high-performance, real-time transit tracker for **all 429 bus stops** and **al
 
 The native Android app is ready to install! Download the latest APK release directly:
 
-[![Download APK](https://img.shields.io/badge/Download_APK-v1.2.0-emerald?style=for-the-badge&logo=android)](https://github.com/MorfidisJ/ioannina-bus/releases/latest)
+[![Download APK](https://img.shields.io/badge/Download_APK-v1.3.0-emerald?style=for-the-badge&logo=android)](https://github.com/MorfidisJ/ioannina-bus/releases/latest)
 
-👉 **[Download ioannina-bus.apk from GitHub Releases (v1.2.0)](https://github.com/MorfidisJ/ioannina-bus/releases/download/v1.2.0/ioannina-bus.apk)**
+👉 **[Download ioannina-bus.apk from GitHub Releases (v1.3.0)](https://github.com/MorfidisJ/ioannina-bus/releases/download/v1.3.0/ioannina-bus.apk)**
 
 *Self-contained: Connects directly to the CityBus telematics service via native CapacitorHttp without requiring any local backend.*
 
@@ -18,6 +18,17 @@ The native Android app is ready to install! Download the latest APK release dire
 
 ## ✨ Features
 
+- 🔄 **Multi-Leg Transfer Graph Routing (Μηχανή Δρομολόγησης με Μετεπιβίβαση)**:
+  - Solves the connectivity gap for non-central suburbs (e.g. Ανατολή, Καρδαμίτσια, Σεισμόπληκτα, Εξοχή) that have no direct line to the University (Δουρούτη) or Hospitals (ΠΓΝΙ, Χατζηκώστα).
+  - Graph-based connection routing across all 16 lines and 429 stops via Ioannina transit hubs (*Σταθμαρχείο*, *Άλσος*, *Δικαστικά Μέγαρα*, *Πλατεία Πύρρου*, *Υπεραστικό ΚΤΕΛ*).
+  - Step-by-step breakdown: `[Γραμμή 1] ➔ 🔄 Αλλαγή στον Κόμβο (Περπάτημα / Αναμονή) ➔ [Γραμμή 2]`.
+  - Synchronizes live telematics for both legs with safety connection buffers.
+  - Multi-segment interactive map visualization showing walking paths, transfer hub pins, and distinct route color lines.
+- 🚦 **Real-Time Traffic Jam & Delay Anomaly Detector (Ανιχνευτής Κίνησης & Καθυστερήσεων)**:
+  - Differential GPS velocity tracking: computes speed differentials $v_{bus} = \frac{\Delta d}{\Delta t}$ across consecutive telematics updates.
+  - Intelligent Stop Dwell Filter: reliably distinguishes normal passenger boarding ($\le 35\text{m}$ from stops) from real gridlock ($> 40\text{m}$ with speed $< 8\text{ km/h}$).
+  - Geofences Ioannina traffic choke points (Λεωφ. Δωδώνης, Οδός Αβέρωφ/Κέντρο, Οδός 28ης Οκτωβρίου, Κόμβος Άλσους).
+  - Dynamically adjusts arrival ETAs and displays alert badges (`⚠️ Κίνηση στη Δωδώνης (+4') • 5 km/h`) on live arrivals cards and pulsating bus markers on the map.
 - 🧭 **Universal Transit Route Planner («Πώς θα πάω εκεί;»)**:
   - Multi-modal Point A ➔ Point B trip planner across all 16 bus lines in Ioannina.
   - **Custom Locations Support**: Pick any custom point by tapping on the interactive map, typing any street address (OpenStreetMap Nominatim geocoding), using live GPS, or choosing a bus stop.

@@ -14,11 +14,13 @@ import {
   Compass,
   Check,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  ArrowRight,
+  Repeat
 } from 'lucide-react';
 import { BusStop, CustomLocationPoint, RoutePlanOption, SavedPlace } from '../types';
 import {
-  planDirectRoutes,
+  planRoutes,
   searchIoanninaNominatim,
   getSavedPlaces,
   saveCustomPlace,
@@ -151,7 +153,7 @@ export const RoutePlannerModal: React.FC<RoutePlannerModalProps> = ({
     let isCancelled = false;
     setIsLoadingRoutes(true);
 
-    planDirectRoutes(origin, destination, true)
+    planRoutes(origin, destination, true)
       .then(options => {
         if (!isCancelled) {
           setRouteOptions(options);
@@ -578,11 +580,11 @@ export const RoutePlannerModal: React.FC<RoutePlannerModalProps> = ({
               </div>
             )}
 
-            {/* Empty state: No direct routes found */}
+            {/* Empty state: No routes found */}
             {!isLoadingRoutes && destination && routeOptions.length === 0 && (
               <div className="p-5 text-center bg-slate-950/40 border border-slate-800 rounded-2xl space-y-1.5">
                 <p className="text-xs font-bold text-amber-400">
-                  {lang === 'el' ? 'Δεν βρέθηκε απευθείας γραμμή' : 'No direct line found'}
+                  {lang === 'el' ? 'Δεν βρέθηκε διαθέσιμη διαδρομή' : 'No available route found'}
                 </p>
                 <p className="text-[11px] text-slate-400">
                   {lang === 'el'
@@ -593,98 +595,225 @@ export const RoutePlannerModal: React.FC<RoutePlannerModalProps> = ({
             )}
 
             {/* Route Options Cards */}
-            {!isLoadingRoutes && routeOptions.map((opt, idx) => (
-              <div
-                key={opt.id}
-                className="bg-slate-950/70 hover:bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-2xl p-3.5 space-y-2.5 transition-all shadow-md group"
-              >
-                {/* Line Header & Total Time */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="px-2.5 py-1 rounded-lg font-bold text-xs shadow-sm"
-                      style={{ backgroundColor: opt.lineColor, color: opt.lineTextColor }}
-                    >
-                      {opt.lineCode}
-                    </span>
-                    <span className="text-xs font-bold text-slate-200 truncate max-w-[170px] sm:max-w-xs">
-                      {opt.lineName}
-                    </span>
-                  </div>
+            {!isLoadingRoutes && routeOptions.map((opt) => {
+              const isTransfer = opt.type === 'transfer' && opt.legs && opt.legs.length >= 2;
+              const leg1 = isTransfer ? opt.legs![0] : null;
+              const leg2 = isTransfer ? opt.legs![1] : null;
 
-                  <div className="text-right">
-                    <span className="text-xs font-bold text-emerald-400">
-                      ~{opt.totalMinutes} {lang === 'el' ? 'λεπτά' : 'mins'}
-                    </span>
-                    <span className="block text-[10px] text-slate-500">
-                      {lang === 'el' ? 'συνολικά' : 'total'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Step-by-Step Breakdown */}
-                <div className="space-y-1.5 pt-1 text-[11px] border-t border-slate-800/80">
-                  {/* Step 1: Walk to Boarding Stop */}
-                  <div className="flex items-center gap-2 text-slate-300">
-                    <Footprints size={13} className="text-sky-400 shrink-0" />
-                    <span className="truncate">
-                      {opt.walkToBoardingMinutes > 0
-                        ? (lang === 'el'
-                          ? `Περπάτημα ${opt.walkToBoardingMinutes}' (${opt.walkToBoardingMeters}m) στη Στάση`
-                          : `Walk ${opt.walkToBoardingMinutes}' (${opt.walkToBoardingMeters}m) to`)
-                        : (lang === 'el' ? 'Επιβίβαση στη Στάση' : 'Board at')}
-                      {' '}
-                      <strong className="text-white">{lang === 'el' ? opt.boardingStop.name_el : opt.boardingStop.name_en}</strong>
-                    </span>
-                  </div>
-
-                  {/* Step 2: Bus Arrival / Ride */}
-                  <div className="flex items-center justify-between gap-2 text-slate-300 pl-5">
-                    <span className="text-slate-400 flex items-center gap-1.5">
-                      <Bus size={12} className="text-slate-500" />
-                      {opt.liveMinutesUntil !== null && opt.liveMinutesUntil !== undefined ? (
-                        <span className="text-amber-400 font-bold animate-pulse">
-                          ⚡ {lang === 'el' ? `Έρχεται σε ${opt.liveMinutesUntil}' (Live)` : `Arriving in ${opt.liveMinutesUntil}' (Live)`}
-                        </span>
-                      ) : (
-                        <span>{lang === 'el' ? 'Αναμονή ~5-10 λεπτά' : 'Wait ~5-10 mins'}</span>
-                      )}
-                    </span>
-                    <span className="text-slate-400">
-                      ~{opt.estimatedRideMinutes}' {lang === 'el' ? 'διαδρομή' : 'ride'} ({opt.stopsCount} {lang === 'el' ? 'στάσεις' : 'stops'})
-                    </span>
-                  </div>
-
-                  {/* Step 3: Alighting & Walk to Destination */}
-                  <div className="flex items-center gap-2 text-slate-300">
-                    <MapPin size={13} className="text-rose-400 shrink-0" />
-                    <span className="truncate">
-                      {lang === 'el' ? 'Αποβίβαση στη Στάση' : 'Alight at'}
-                      {' '}
-                      <strong className="text-white">{lang === 'el' ? opt.alightingStop.name_el : opt.alightingStop.name_en}</strong>
-                      {opt.walkFromAlightingMinutes > 0 && (
-                        <span className="text-slate-400 ml-1">
-                          (+{opt.walkFromAlightingMinutes}' {lang === 'el' ? 'περπάτημα' : 'walk'})
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-
-                {/* View on Map Button */}
-                <button
-                  onClick={() => {
-                    onSelectRoutePlan(origin, destination!, opt);
-                    onClose();
-                  }}
-                  className="w-full py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-md mt-1"
+              return (
+                <div
+                  key={opt.id}
+                  className="bg-slate-950/70 hover:bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-2xl p-3.5 space-y-2.5 transition-all shadow-md group"
                 >
-                  <Compass size={14} />
-                  {lang === 'el' ? 'Προβολή στον Χάρτη' : 'View on Map'}
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-            ))}
+                  {/* Line Header & Total Time */}
+                  <div className="flex items-center justify-between">
+                    {isTransfer && leg1 && leg2 ? (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className="px-2 py-0.5 rounded-lg font-bold text-xs shadow-sm"
+                          style={{ backgroundColor: leg1.lineColor, color: leg1.lineTextColor }}
+                        >
+                          {leg1.lineCode}
+                        </span>
+                        <ArrowRight size={12} className="text-slate-400" />
+                        <span
+                          className="px-2 py-0.5 rounded-lg font-bold text-xs shadow-sm"
+                          style={{ backgroundColor: leg2.lineColor, color: leg2.lineTextColor }}
+                        >
+                          {leg2.lineCode}
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded-full font-bold flex items-center gap-1">
+                          <Repeat size={10} />
+                          {lang === 'el' ? '1 Μετεπιβίβαση' : '1 Transfer'}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="px-2.5 py-1 rounded-lg font-bold text-xs shadow-sm"
+                          style={{ backgroundColor: opt.lineColor, color: opt.lineTextColor }}
+                        >
+                          {opt.lineCode}
+                        </span>
+                        <span className="text-xs font-bold text-slate-200 truncate max-w-[170px] sm:max-w-xs">
+                          {opt.lineName}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded font-semibold">
+                          {lang === 'el' ? 'Απευθείας' : 'Direct'}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-emerald-400">
+                        ~{opt.totalMinutes} {lang === 'el' ? 'λεπτά' : 'mins'}
+                      </span>
+                      <span className="block text-[10px] text-slate-500">
+                        {lang === 'el' ? 'συνολικά' : 'total'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Step-by-Step Breakdown */}
+                  {isTransfer && leg1 && leg2 ? (
+                    <div className="space-y-2 pt-1 text-[11px] border-t border-slate-800/80">
+                      {/* Step 1: Walk to First Boarding Stop */}
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <Footprints size={13} className="text-sky-400 shrink-0" />
+                        <span className="truncate">
+                          {opt.walkToBoardingMinutes > 0
+                            ? (lang === 'el'
+                              ? `Περπάτημα ${opt.walkToBoardingMinutes}' (${opt.walkToBoardingMeters}m) στη Στάση`
+                              : `Walk ${opt.walkToBoardingMinutes}' (${opt.walkToBoardingMeters}m) to`)
+                            : (lang === 'el' ? 'Επιβίβαση στη Στάση' : 'Board at')}
+                          {' '}
+                          <strong className="text-white">{lang === 'el' ? leg1.boardingStop.name_el : leg1.boardingStop.name_en}</strong>
+                        </span>
+                      </div>
+
+                      {/* Step 2: Leg 1 Bus Ride */}
+                      <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1 ml-4">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-sky-400 flex items-center gap-1.5">
+                            <Bus size={12} />
+                            {lang === 'el' ? `1ο Σκέλος: Γραμμή ${leg1.lineCode}` : `Leg 1: Line ${leg1.lineCode}`}
+                          </span>
+                          {leg1.liveMinutesUntil !== null && leg1.liveMinutesUntil !== undefined ? (
+                            <span className="text-amber-400 font-bold animate-pulse text-[10px]">
+                              ⚡ {lang === 'el' ? `Σε ${leg1.liveMinutesUntil}' (Live)` : `In ${leg1.liveMinutesUntil}' (Live)`}
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 text-[10px]">{lang === 'el' ? 'Αναμονή ~5\'' : 'Wait ~5\''}</span>
+                          )}
+                        </div>
+                        <div className="text-slate-400 text-[10px] flex justify-between">
+                          <span>{lang === 'el' ? 'Προς' : 'To'}: {lang === 'el' ? leg1.alightingStop.name_el : leg1.alightingStop.name_en}</span>
+                          <span>~{leg1.estimatedRideMinutes}' ({leg1.stopsCount} {lang === 'el' ? 'στάσεις' : 'stops'})</span>
+                        </div>
+                      </div>
+
+                      {/* Step 3: Transfer at Hub */}
+                      <div className="flex items-center gap-2 text-amber-300 bg-amber-950/20 border border-amber-800/30 p-2 rounded-xl">
+                        <Repeat size={13} className="text-amber-400 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold truncate text-[11px]">
+                            {lang === 'el' ? 'Μετεπιβίβαση:' : 'Transfer at:'}{' '}
+                            <span className="text-white">{lang === 'el' ? (opt.transferStop?.name_el || leg1.alightingStop.name_el) : (opt.transferStop?.name_en || leg1.alightingStop.name_en)}</span>
+                          </div>
+                          <div className="text-[10px] text-amber-400/80">
+                            {opt.transferWalkMeters && opt.transferWalkMeters > 20
+                              ? (lang === 'el'
+                                ? `Περπάτημα ${opt.transferWalkMinutes}' (${opt.transferWalkMeters}m) • Αναμονή ~${opt.transferWaitMinutes || 4}'`
+                                : `Walk ${opt.transferWalkMinutes}' (${opt.transferWalkMeters}m) • Wait ~${opt.transferWaitMinutes || 4}'`)
+                              : (lang === 'el'
+                                ? `Ίδια στάση • Αναμονή ~${opt.transferWaitMinutes || 4}'`
+                                : `Same stop • Wait ~${opt.transferWaitMinutes || 4}'`)}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Step 4: Leg 2 Bus Ride */}
+                      <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1 ml-4">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                            <Bus size={12} />
+                            {lang === 'el' ? `2ο Σκέλος: Γραμμή ${leg2.lineCode}` : `Leg 2: Line ${leg2.lineCode}`}
+                          </span>
+                          {leg2.liveMinutesUntil !== null && leg2.liveMinutesUntil !== undefined ? (
+                            <span className="text-emerald-400 font-bold text-[10px]">
+                              ⚡ {lang === 'el' ? `Σύνδεση σε ${leg2.liveMinutesUntil}' (Live)` : `Connection in ${leg2.liveMinutesUntil}' (Live)`}
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 text-[10px]">{lang === 'el' ? 'Προγραμματισμένο' : 'Scheduled'}</span>
+                          )}
+                        </div>
+                        <div className="text-slate-400 text-[10px] flex justify-between">
+                          <span>{lang === 'el' ? 'Προς' : 'To'}: {lang === 'el' ? leg2.alightingStop.name_el : leg2.alightingStop.name_en}</span>
+                          <span>~{leg2.estimatedRideMinutes}' ({leg2.stopsCount} {lang === 'el' ? 'στάσεις' : 'stops'})</span>
+                        </div>
+                      </div>
+
+                      {/* Step 5: Final Alighting & Destination */}
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <MapPin size={13} className="text-rose-400 shrink-0" />
+                        <span className="truncate">
+                          {lang === 'el' ? 'Αποβίβαση στη Στάση' : 'Alight at'}
+                          {' '}
+                          <strong className="text-white">{lang === 'el' ? leg2.alightingStop.name_el : leg2.alightingStop.name_en}</strong>
+                          {opt.walkFromAlightingMinutes > 0 && (
+                            <span className="text-slate-400 ml-1">
+                              (+{opt.walkFromAlightingMinutes}' {lang === 'el' ? 'περπάτημα' : 'walk'})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Direct Route Breakdown */
+                    <div className="space-y-1.5 pt-1 text-[11px] border-t border-slate-800/80">
+                      {/* Step 1: Walk to Boarding Stop */}
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <Footprints size={13} className="text-sky-400 shrink-0" />
+                        <span className="truncate">
+                          {opt.walkToBoardingMinutes > 0
+                            ? (lang === 'el'
+                              ? `Περπάτημα ${opt.walkToBoardingMinutes}' (${opt.walkToBoardingMeters}m) στη Στάση`
+                              : `Walk ${opt.walkToBoardingMinutes}' (${opt.walkToBoardingMeters}m) to`)
+                            : (lang === 'el' ? 'Επιβίβαση στη Στάση' : 'Board at')}
+                          {' '}
+                          <strong className="text-white">{lang === 'el' ? opt.boardingStop.name_el : opt.boardingStop.name_en}</strong>
+                        </span>
+                      </div>
+
+                      {/* Step 2: Bus Arrival / Ride */}
+                      <div className="flex items-center justify-between gap-2 text-slate-300 pl-5">
+                        <span className="text-slate-400 flex items-center gap-1.5">
+                          <Bus size={12} className="text-slate-500" />
+                          {opt.liveMinutesUntil !== null && opt.liveMinutesUntil !== undefined ? (
+                            <span className="text-amber-400 font-bold animate-pulse">
+                              ⚡ {lang === 'el' ? `Έρχεται σε ${opt.liveMinutesUntil}' (Live)` : `Arriving in ${opt.liveMinutesUntil}' (Live)`}
+                            </span>
+                          ) : (
+                            <span>{lang === 'el' ? 'Αναμονή ~5-10 λεπτά' : 'Wait ~5-10 mins'}</span>
+                          )}
+                        </span>
+                        <span className="text-slate-400">
+                          ~{opt.estimatedRideMinutes}' {lang === 'el' ? 'διαδρομή' : 'ride'} ({opt.stopsCount} {lang === 'el' ? 'στάσεις' : 'stops'})
+                        </span>
+                      </div>
+
+                      {/* Step 3: Alighting & Walk to Destination */}
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <MapPin size={13} className="text-rose-400 shrink-0" />
+                        <span className="truncate">
+                          {lang === 'el' ? 'Αποβίβαση στη Στάση' : 'Alight at'}
+                          {' '}
+                          <strong className="text-white">{lang === 'el' ? opt.alightingStop.name_el : opt.alightingStop.name_en}</strong>
+                          {opt.walkFromAlightingMinutes > 0 && (
+                            <span className="text-slate-400 ml-1">
+                              (+{opt.walkFromAlightingMinutes}' {lang === 'el' ? 'περπάτημα' : 'walk'})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* View on Map Button */}
+                  <button
+                    onClick={() => {
+                      onSelectRoutePlan(origin, destination!, opt);
+                      onClose();
+                    }}
+                    className="w-full py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-md mt-1"
+                  >
+                    <Compass size={14} />
+                    {lang === 'el' ? 'Προβολή στον Χάρτη' : 'View on Map'}
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

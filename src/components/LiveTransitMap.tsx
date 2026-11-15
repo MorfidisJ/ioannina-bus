@@ -145,10 +145,9 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     // 0. Render Active Route Plan (if present)
     if (activeRoutePlan) {
       const { origin, destination, selectedOption } = activeRoutePlan;
-      const bStop = selectedOption.boardingStop;
-      const aStop = selectedOption.alightingStop;
+      const isTransfer = selectedOption.type === 'transfer' && selectedOption.legs && selectedOption.legs.length >= 2;
 
-      // Origin Pin (Blue)
+      // Origin Pin (Blue A)
       const originIcon = L.divIcon({
         className: 'route-origin-marker',
         html: `
@@ -172,34 +171,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         `)
         .addTo(layer);
 
-      // Walking line from Origin to Boarding Stop (dashed sky blue)
-      if (calculateDistanceMeters(origin.lat, origin.lng, bStop.lat, bStop.lng) > 15) {
-        L.polyline([[origin.lat, origin.lng], [bStop.lat, bStop.lng]], {
-          color: '#38bdf8',
-          weight: 4,
-          dashArray: '6, 8',
-          opacity: 0.95
-        }).addTo(layer);
-      }
-
-      // Bus ride line between Boarding Stop and Alighting Stop (solid line)
-      L.polyline([[bStop.lat, bStop.lng], [aStop.lat, aStop.lng]], {
-        color: selectedOption.lineColor || '#2563eb',
-        weight: 6,
-        opacity: 0.85
-      }).addTo(layer);
-
-      // Walking line from Alighting Stop to Destination (dashed emerald green)
-      if (calculateDistanceMeters(aStop.lat, aStop.lng, destination.lat, destination.lng) > 15) {
-        L.polyline([[aStop.lat, aStop.lng], [destination.lat, destination.lng]], {
-          color: '#10b981',
-          weight: 4,
-          dashArray: '6, 8',
-          opacity: 0.95
-        }).addTo(layer);
-      }
-
-      // Destination Pin (Rose/Red)
+      // Destination Pin (Rose/Red B)
       const destIcon = L.divIcon({
         className: 'route-dest-marker',
         html: `
@@ -223,14 +195,130 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         `)
         .addTo(layer);
 
-      // Fit bounds to entire trip
-      const routeBounds = L.latLngBounds([
-        [origin.lat, origin.lng],
-        [bStop.lat, bStop.lng],
-        [aStop.lat, aStop.lng],
-        [destination.lat, destination.lng]
-      ]);
-      map.fitBounds(routeBounds, { padding: [50, 50], maxZoom: 16, animate: true });
+      if (isTransfer) {
+        const leg1 = selectedOption.legs![0];
+        const leg2 = selectedOption.legs![1];
+        const transferStop = selectedOption.transferStop || leg1.alightingStop;
+
+        // Walking line from Origin to Leg 1 Boarding Stop (dashed sky blue)
+        if (calculateDistanceMeters(origin.lat, origin.lng, leg1.boardingStop.lat, leg1.boardingStop.lng) > 15) {
+          L.polyline([[origin.lat, origin.lng], [leg1.boardingStop.lat, leg1.boardingStop.lng]], {
+            color: '#38bdf8',
+            weight: 4,
+            dashArray: '6, 8',
+            opacity: 0.95
+          }).addTo(layer);
+        }
+
+        // Leg 1 Bus ride line (solid)
+        L.polyline([[leg1.boardingStop.lat, leg1.boardingStop.lng], [leg1.alightingStop.lat, leg1.alightingStop.lng]], {
+          color: leg1.lineColor || '#2563eb',
+          weight: 6,
+          opacity: 0.85
+        }).addTo(layer);
+
+        // Transfer Hub Pin (Amber)
+        const transferIcon = L.divIcon({
+          className: 'route-transfer-marker',
+          html: `
+            <div class="relative flex items-center justify-center w-8 h-8">
+              <span class="animate-ping absolute inline-flex h-7 w-7 rounded-full bg-amber-400 opacity-50"></span>
+              <div class="w-7 h-7 rounded-full bg-amber-500 border-2 border-white shadow-xl flex items-center justify-center text-white font-bold text-xs">
+                🔄
+              </div>
+            </div>
+          `,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
+        });
+
+        L.marker([transferStop.lat, transferStop.lng], { icon: transferIcon, zIndexOffset: 1250 })
+          .bindPopup(`
+            <div class="text-xs font-sans text-slate-100 py-1 space-y-0.5">
+              <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wide">Κόμβος Μετεπιβίβασης</span>
+              <p class="font-bold text-white">${transferStop.name_el}</p>
+              <p class="text-[11px] text-slate-300">Αλλαγή: Γραμμή ${leg1.lineCode} ➔ Γραμμή ${leg2.lineCode}</p>
+              ${selectedOption.transferWalkMeters && selectedOption.transferWalkMeters > 20 ? `<p class="text-[10px] text-amber-300">Περπάτημα ${selectedOption.transferWalkMeters}m προς στάση ${leg2.boardingStop.name_el}</p>` : ''}
+            </div>
+          `)
+          .addTo(layer);
+
+        // Transfer walk line if transfer stops are distinct (dashed amber)
+        if (selectedOption.transferWalkMeters && selectedOption.transferWalkMeters > 15) {
+          L.polyline([[leg1.alightingStop.lat, leg1.alightingStop.lng], [leg2.boardingStop.lat, leg2.boardingStop.lng]], {
+            color: '#f59e0b',
+            weight: 4,
+            dashArray: '4, 6',
+            opacity: 0.95
+          }).addTo(layer);
+        }
+
+        // Leg 2 Bus ride line (solid)
+        L.polyline([[leg2.boardingStop.lat, leg2.boardingStop.lng], [leg2.alightingStop.lat, leg2.alightingStop.lng]], {
+          color: leg2.lineColor || '#059669',
+          weight: 6,
+          opacity: 0.85
+        }).addTo(layer);
+
+        // Walking line from Leg 2 Alighting Stop to Destination (dashed emerald green)
+        if (calculateDistanceMeters(leg2.alightingStop.lat, leg2.alightingStop.lng, destination.lat, destination.lng) > 15) {
+          L.polyline([[leg2.alightingStop.lat, leg2.alightingStop.lng], [destination.lat, destination.lng]], {
+            color: '#10b981',
+            weight: 4,
+            dashArray: '6, 8',
+            opacity: 0.95
+          }).addTo(layer);
+        }
+
+        const routeBounds = L.latLngBounds([
+          [origin.lat, origin.lng],
+          [leg1.boardingStop.lat, leg1.boardingStop.lng],
+          [transferStop.lat, transferStop.lng],
+          [leg2.boardingStop.lat, leg2.boardingStop.lng],
+          [leg2.alightingStop.lat, leg2.alightingStop.lng],
+          [destination.lat, destination.lng]
+        ]);
+        map.fitBounds(routeBounds, { padding: [50, 50], maxZoom: 16, animate: true });
+      } else {
+        // Direct Route rendering
+        const bStop = selectedOption.boardingStop;
+        const aStop = selectedOption.alightingStop;
+
+        // Walking line from Origin to Boarding Stop (dashed sky blue)
+        if (calculateDistanceMeters(origin.lat, origin.lng, bStop.lat, bStop.lng) > 15) {
+          L.polyline([[origin.lat, origin.lng], [bStop.lat, bStop.lng]], {
+            color: '#38bdf8',
+            weight: 4,
+            dashArray: '6, 8',
+            opacity: 0.95
+          }).addTo(layer);
+        }
+
+        // Bus ride line between Boarding Stop and Alighting Stop (solid line)
+        L.polyline([[bStop.lat, bStop.lng], [aStop.lat, aStop.lng]], {
+          color: selectedOption.lineColor || '#2563eb',
+          weight: 6,
+          opacity: 0.85
+        }).addTo(layer);
+
+        // Walking line from Alighting Stop to Destination (dashed emerald green)
+        if (calculateDistanceMeters(aStop.lat, aStop.lng, destination.lat, destination.lng) > 15) {
+          L.polyline([[aStop.lat, aStop.lng], [destination.lat, destination.lng]], {
+            color: '#10b981',
+            weight: 4,
+            dashArray: '6, 8',
+            opacity: 0.95
+          }).addTo(layer);
+        }
+
+        const routeBounds = L.latLngBounds([
+          [origin.lat, origin.lng],
+          [bStop.lat, bStop.lng],
+          [aStop.lat, aStop.lng],
+          [destination.lat, destination.lng]
+        ]);
+        map.fitBounds(routeBounds, { padding: [50, 50], maxZoom: 16, animate: true });
+      }
     }
 
     // 1. Render User Location (if available)
@@ -338,19 +426,24 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
 
     validVehicles.forEach((v, idx) => {
       const isUrgent = v.minutesUntil <= 2;
+      const isCongested = Boolean(v.traffic?.isCongested);
+      const isHeavyCongested = v.traffic?.congestionLevel === 'heavy';
+
       const busIcon = L.divIcon({
         className: 'live-bus-marker',
         html: `
           <div class="relative flex items-center justify-center cursor-pointer group">
             ${isUrgent ? '<span class="animate-ping absolute inline-flex h-9 w-9 rounded-full bg-amber-400 opacity-60"></span>' : ''}
-            <div class="h-8 px-2 rounded-xl bg-slate-900 border-2 border-sky-400 shadow-xl flex items-center gap-1 text-white font-bold text-xs hover:scale-110 transition-transform">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4c-1.1 0-2.1.8-2.4 1.8l-1.4 5c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
+            ${isCongested ? `<span class="animate-ping absolute inline-flex h-10 w-10 rounded-full ${isHeavyCongested ? 'bg-rose-500' : 'bg-amber-500'} opacity-50"></span>` : ''}
+            <div class="h-8 px-2 rounded-xl bg-slate-900 border-2 ${isCongested ? (isHeavyCongested ? 'border-rose-500' : 'border-amber-400') : 'border-sky-400'} shadow-xl flex items-center gap-1 text-white font-bold text-xs hover:scale-110 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${isCongested ? (isHeavyCongested ? '#f43f5e' : '#f59e0b') : '#38bdf8'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4c-1.1 0-2.1.8-2.4 1.8l-1.4 5c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
               <span class="text-white">${v.line}</span>
+              ${isCongested ? `<span class="text-[9px] px-1 rounded ${isHeavyCongested ? 'bg-rose-900/80 text-rose-200' : 'bg-amber-900/80 text-amber-200'}">⚠️</span>` : ''}
             </div>
           </div>
         `,
-        iconSize: [48, 32],
-        iconAnchor: [24, 16]
+        iconSize: [isCongested ? 56 : 48, 32],
+        iconAnchor: [isCongested ? 28 : 24, 16]
       });
 
       const busMarker = L.marker([v.latitude!, v.longitude!], { icon: busIcon, zIndexOffset: 2000 + idx }).addTo(layer);
@@ -366,6 +459,17 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         <div class="flex items-center gap-1.5 text-xs font-bold ${isUrgent ? 'text-amber-400 animate-pulse' : 'text-emerald-400'}">
           <span>${v.minutesUntil <= 0 ? (lang === 'el' ? 'Φτάνει τώρα!' : 'Arriving now!') : (lang === 'el' ? `σε ${v.minutesUntil} λεπτά` : `in ${v.minutesUntil} mins`)}</span>
         </div>
+        ${v.traffic && v.traffic.isCongested ? `
+          <div class="p-1.5 rounded-lg ${isHeavyCongested ? 'bg-rose-950/80 border border-rose-800/80 text-rose-300' : 'bg-amber-950/80 border border-amber-800/80 text-amber-300'} text-[10px] space-y-0.5">
+            <div class="font-bold flex items-center gap-1">
+              <span>⚠️</span>
+              <span>${isHeavyCongested ? (lang === 'el' ? 'Έντονη Κίνηση' : 'Heavy Traffic') : (lang === 'el' ? 'Καθυστέρηση λόγω κίνησης' : 'Traffic Congestion Delay')}</span>
+            </div>
+            <div>
+              ${v.traffic.corridorName ? `${v.traffic.corridorName} • ` : ''}Ταχύτητα: ${v.traffic.speedKmh} km/h (+${v.traffic.estimatedDelayMinutes}')
+            </div>
+          </div>
+        ` : ''}
         ${onSetAlarmForVehicle ? `
           <button id="btn-alarm-bus-${v.line}-${idx}" class="mt-2 w-full py-1 px-2.5 bg-amber-600/80 hover:bg-amber-500 text-white rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5">
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
@@ -534,18 +638,44 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
       {activeRoutePlan && (
         <div className="absolute bottom-11 inset-x-3 z-[510] bg-slate-900/95 backdrop-blur-md border border-slate-700 text-white p-2.5 rounded-xl shadow-2xl flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shadow-md shrink-0"
-              style={{
-                backgroundColor: activeRoutePlan.selectedOption.lineColor || '#2563eb',
-                color: activeRoutePlan.selectedOption.lineTextColor || '#ffffff'
-              }}
-            >
-              {activeRoutePlan.selectedOption.lineCode}
-            </div>
+            {activeRoutePlan.selectedOption.type === 'transfer' && activeRoutePlan.selectedOption.legs && activeRoutePlan.selectedOption.legs.length >= 2 ? (
+              <div className="flex items-center gap-1 shrink-0">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[11px] shadow-md"
+                  style={{
+                    backgroundColor: activeRoutePlan.selectedOption.legs[0].lineColor || '#2563eb',
+                    color: activeRoutePlan.selectedOption.legs[0].lineTextColor || '#ffffff'
+                  }}
+                >
+                  {activeRoutePlan.selectedOption.legs[0].lineCode}
+                </div>
+                <span className="text-[10px] text-amber-400">➔</span>
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[11px] shadow-md"
+                  style={{
+                    backgroundColor: activeRoutePlan.selectedOption.legs[1].lineColor || '#059669',
+                    color: activeRoutePlan.selectedOption.legs[1].lineTextColor || '#ffffff'
+                  }}
+                >
+                  {activeRoutePlan.selectedOption.legs[1].lineCode}
+                </div>
+              </div>
+            ) : (
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shadow-md shrink-0"
+                style={{
+                  backgroundColor: activeRoutePlan.selectedOption.lineColor || '#2563eb',
+                  color: activeRoutePlan.selectedOption.lineTextColor || '#ffffff'
+                }}
+              >
+                {activeRoutePlan.selectedOption.lineCode}
+              </div>
+            )}
             <div className="min-w-0">
               <div className="text-xs font-bold text-slate-100 truncate">
-                {activeRoutePlan.selectedOption.lineName}
+                {activeRoutePlan.selectedOption.type === 'transfer'
+                  ? (lang === 'el' ? `Διαδρομή με μετεπιβίβαση (${activeRoutePlan.selectedOption.lineCode})` : `Transfer route (${activeRoutePlan.selectedOption.lineCode})`)
+                  : activeRoutePlan.selectedOption.lineName}
               </div>
               <div className="text-[10px] text-slate-400 truncate">
                 {activeRoutePlan.selectedOption.liveMinutesUntil !== null && activeRoutePlan.selectedOption.liveMinutesUntil !== undefined

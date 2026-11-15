@@ -24,6 +24,16 @@ export interface BusLine {
   }>;
 }
 
+export interface VehicleTrafficInfo {
+  speedKmh: number;
+  isCongested: boolean;
+  congestionLevel: 'normal' | 'moderate' | 'heavy';
+  corridorName?: string;
+  estimatedDelayMinutes: number;
+  isAtStop: boolean;
+  lastUpdated: number;
+}
+
 export interface LiveVehicle {
   line: string;
   lineName: string;
@@ -33,6 +43,7 @@ export interface LiveVehicle {
   vehicleCode: string;
   latitude?: number;
   longitude?: number;
+  traffic?: VehicleTrafficInfo;
 }
 
 export interface LiveStopData {
@@ -97,8 +108,23 @@ export interface SavedPlace {
   createdAt: number;
 }
 
+export interface RouteLeg {
+  lineCode: string;
+  lineName: string;
+  lineColor: string;
+  lineTextColor: string;
+  boardingStop: BusStop;
+  alightingStop: BusStop;
+  walkToBoardingMeters: number;
+  walkToBoardingMinutes: number;
+  estimatedRideMinutes: number;
+  liveMinutesUntil?: number | null;
+  stopsCount: number;
+}
+
 export interface RoutePlanOption {
   id: string;
+  type: 'direct' | 'transfer';
   lineCode: string;
   lineName: string;
   lineColor: string;
@@ -113,6 +139,13 @@ export interface RoutePlanOption {
   totalMinutes: number;
   liveMinutesUntil?: number | null;
   stopsCount: number;
+
+  // Optional transfer details (if type === 'transfer')
+  legs?: RouteLeg[];
+  transferStop?: BusStop;
+  transferWalkMeters?: number;
+  transferWalkMinutes?: number;
+  transferWaitMinutes?: number;
 }
 
 export interface ActiveRoutePlan {

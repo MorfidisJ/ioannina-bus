@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { LiveVehicle, ScheduledTrip } from '../types';
+import { enrichVehiclesWithTraffic } from './trafficDetector';
 
 const CITYBUS_BASE_WEB = 'https://ioannina.citybus.gr/el/stops';
 const CITYBUS_BASE_API = 'https://rest.citybus.gr/api/v1';
@@ -82,9 +83,10 @@ export async function fetchLiveArrivals(stopCode: string, lang: 'el' | 'en' = 'e
           longitude: isValidGps ? lng : undefined
         };
       });
+      const enrichedNativeVehicles = enrichVehiclesWithTraffic(vehicles);
       return {
-        isLive: vehicles.length > 0,
-        vehicles,
+        isLive: enrichedNativeVehicles.length > 0,
+        vehicles: enrichedNativeVehicles,
         stopCode
       };
     } catch (e: any) {
@@ -121,9 +123,11 @@ export async function fetchLiveArrivals(stopCode: string, lang: 'el' | 'en' = 'e
     };
   });
 
+  const enrichedVehicles = enrichVehiclesWithTraffic(normalizedVehicles);
+
   return {
-    isLive: Boolean(data.isLive && normalizedVehicles.length > 0),
-    vehicles: normalizedVehicles,
+    isLive: Boolean(data.isLive && enrichedVehicles.length > 0),
+    vehicles: enrichedVehicles,
     stopCode: data.stopCode || stopCode
   };
 }
