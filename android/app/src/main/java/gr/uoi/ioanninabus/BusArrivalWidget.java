@@ -217,3 +217,4 @@ public class BusArrivalWidget extends AppWidgetProvider {
         return response.toString();
     }
 }
+

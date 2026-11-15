@@ -430,14 +430,14 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
   };
 
   return (
-    <div className={`relative transition-all duration-300 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-md ${
-      isFullscreen ? 'fixed inset-3 z-50 rounded-2xl' : 'w-full h-72 sm:h-80 mb-4'
+    <div className={`transition-all duration-300 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-md ${
+      isFullscreen ? 'fixed inset-3 z-[60] rounded-2xl shadow-2xl' : 'relative z-0 isolate w-full h-72 sm:h-80 mb-4'
     }`}>
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full" />
 
       {/* Map Top Floating Header */}
-      <div className="absolute top-2.5 left-2.5 z-[1000] flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-700/80 shadow-md">
+      <div className="absolute top-2.5 left-2.5 z-[15] flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-700/80 shadow-md">
         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
         <span className="text-xs font-bold text-slate-100 truncate max-w-[160px] sm:max-w-xs">
           {lang === 'el' ? activeStop.name_el : activeStop.name_en}
@@ -448,7 +448,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
       </div>
 
       {/* Map Control Buttons (Floating on Right) */}
-      <div className="absolute top-2.5 right-2.5 z-[1000] flex flex-col gap-1.5">
+      <div className="absolute top-2.5 right-2.5 z-[15] flex flex-col gap-1.5">
         <button
           onClick={toggleFullscreen}
           className="w-8 h-8 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 shadow-md flex items-center justify-center active:scale-95 transition-all"
@@ -499,7 +499,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
       </div>
 
       {/* Map Bottom Status Bar */}
-      <div className="absolute bottom-2 left-2.5 z-[1000] flex items-center gap-2">
+      <div className="absolute bottom-2 left-2.5 z-[15] flex items-center gap-2">
         <span className="text-[11px] bg-slate-900/90 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-800 text-slate-300 font-medium shadow-sm flex items-center gap-1.5">
           <Bus size={12} className="text-sky-400" />
           {vehicles.filter(isValidVehicleGps).length > 0
@@ -512,7 +512,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
 
       {/* Picking Location Floating Bar */}
       {isPickingLocation && (
-        <div className="absolute top-3 inset-x-3 z-[1100] bg-sky-950/95 backdrop-blur-md border-2 border-sky-400 text-white px-3.5 py-2.5 rounded-xl shadow-2xl flex items-center justify-between animate-pulse">
+        <div className="absolute top-3 inset-x-3 z-[25] bg-sky-950/95 backdrop-blur-md border-2 border-sky-400 text-white px-3.5 py-2.5 rounded-xl shadow-2xl flex items-center justify-between animate-pulse">
           <div className="flex items-center gap-2">
             <MapPin size={18} className="text-sky-400 animate-bounce" />
             <span className="text-xs font-bold text-sky-100">
@@ -532,7 +532,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
 
       {/* Active Route Plan Bottom Pill */}
       {activeRoutePlan && (
-        <div className="absolute bottom-11 inset-x-3 z-[1100] bg-slate-900/95 backdrop-blur-md border border-slate-700 text-white p-2.5 rounded-xl shadow-2xl flex items-center justify-between gap-3">
+        <div className="absolute bottom-11 inset-x-3 z-[25] bg-slate-900/95 backdrop-blur-md border border-slate-700 text-white p-2.5 rounded-xl shadow-2xl flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shadow-md shrink-0"

@@ -88,7 +88,7 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
       <div className="w-full sm:max-w-xl h-[92vh] sm:h-auto sm:max-h-[88vh] rounded-t-3xl sm:rounded-2xl bg-slate-900 border border-slate-800 flex flex-col overflow-hidden shadow-2xl">
         {/* Mobile Pull Handle */}
         <div className="w-12 h-1.5 bg-slate-700/60 rounded-full mx-auto mt-2.5 mb-1 sm:hidden flex-shrink-0" />

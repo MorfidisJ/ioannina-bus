@@ -56,3 +56,4 @@ public class WidgetBridgePlugin extends Plugin {
         call.resolve(ret);
     }
 }
+
